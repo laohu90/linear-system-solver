@@ -44,8 +44,10 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
     setB2(eq2.b.toString());
     setC2(eq2.c.toString());
 
-    if (eq1.rawStr) setFree1(eq1.rawStr);
-    if (eq2.rawStr) setFree2(eq2.rawStr);
+    const synth1 = `${eq1.a.toString()}x + ${eq1.b.toString()}y = ${eq1.c.toString()}`.replace(/\+ -/g, '- ');
+    const synth2 = `${eq2.a.toString()}x + ${eq2.b.toString()}y = ${eq2.c.toString()}`.replace(/\+ -/g, '- ');
+    setFree1(eq1.rawStr || synth1);
+    setFree2(eq2.rawStr || synth2);
     setInputError(null);
   }, [eq1, eq2]);
 

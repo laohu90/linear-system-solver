@@ -339,6 +339,11 @@ export const CoordinateGraph: React.FC<CoordinateGraphProps> = ({ analysis }) =>
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onWheel={(e) => {
+          e.preventDefault();
+          const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
+          setScale((s) => Math.min(120, Math.max(10, s * zoomFactor)));
+        }}
         onMouseLeave={() => {
           setIsDragging(false);
           setHoverCoord(null);

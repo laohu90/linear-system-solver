@@ -56,21 +56,51 @@ export class Fraction {
       }
       return new Fraction(BigInt(Math.round(val)), 1n);
     }
-    // String parsing like "3", "-2/5", "0.5"
+
     const str = val.trim();
-    if (str.includes('/')) {
-      const [nStr, dStr] = str.split('/');
-      return new Fraction(BigInt(nStr.trim()), BigInt(dStr.trim()));
+    if (!str) return new Fraction(0n, 1n);
+    if (str === '+' || str === '+1') return new Fraction(1n, 1n);
+    if (str === '-' || str === '-1') return new Fraction(-1n, 1n);
+
+    // Multiplications like "2 * 12"
+    if (str.includes('*')) {
+      const factors = str.split('*');
+      let acc = Fraction.from(factors[0].trim());
+      for (let i = 1; i < factors.length; i++) {
+        acc = acc.mul(Fraction.from(factors[i].trim()));
+      }
+      return acc;
     }
+
+    // Fraction parsing like "3/4", "-2/5", "/3", "+/2", "-/4"
+    if (str.includes('/')) {
+      const [nStrRaw, dStrRaw] = str.split('/');
+      const nStr = nStrRaw.trim();
+      const dStr = dStrRaw.trim();
+
+      let num = 1n;
+      if (!nStr || nStr === '+') num = 1n;
+      else if (nStr === '-') num = -1n;
+      else {
+        num = BigInt(nStr.replace(/^\+/, ''));
+      }
+
+      const den = BigInt(dStr.replace(/^\+/, ''));
+      return new Fraction(num, den);
+    }
+
+    // Decimal parsing like "0.5", "-2.25", "2."
     if (str.includes('.')) {
       const parts = str.split('.');
       const isNeg = parts[0].startsWith('-');
-      const absInt = parts[0].replace('-', '');
+      const absInt = parts[0].replace('-', '') || '0';
       const decLength = parts[1].length;
       const den = 10n ** BigInt(decLength);
-      const numVal = BigInt(absInt) * den + BigInt(parts[1]);
+      const decPart = parts[1] ? BigInt(parts[1]) : 0n;
+      const numVal = BigInt(absInt) * den + decPart;
       return new Fraction(isNeg ? -numVal : numVal, den);
     }
+
     const clean = str.replace(/^\+/, '');
     if (!clean) return new Fraction(0n, 1n);
     return new Fraction(BigInt(clean), 1n);

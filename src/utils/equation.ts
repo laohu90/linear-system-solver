@@ -152,17 +152,20 @@ function parseExpression(expr: string): Poly {
   // Normalize unary signs at start
   let normalized = expr;
 
-  // Expand simple brackets: k(Ax + By + C)
-  // e.g., 2(x+1) -> 2x+2; -3(2y-4) -> -6y+12; -(x+y) -> -x-y
-  const bracketRegex = /([+-]?\d*(?:\.\d+)?|\b)\(([^()]+)\)/;
+  // Expand simple brackets: k(Ax + By + C) or (Ax + By + C)/d or k(Ax + By + C)/d
+  const bracketRegex = /([+-]?\d*(?:\.\d+)?|\b)\(([^()]+)\)(?:\/(\d+(?:\.\d+)?))?/;
   let safety = 20;
   while (bracketRegex.test(normalized) && safety > 0) {
     safety--;
-    normalized = normalized.replace(bracketRegex, (_, multStr, inner) => {
+    normalized = normalized.replace(bracketRegex, (_, multStr, inner, divStr) => {
       let multiplier = new Fraction(1n);
       if (multStr === '-' || multStr === '-1') multiplier = new Fraction(-1n);
       else if (multStr === '+' || multStr === '+1' || multStr === '') multiplier = new Fraction(1n);
       else multiplier = Fraction.from(multStr);
+
+      if (divStr) {
+        multiplier = multiplier.div(Fraction.from(divStr));
+      }
 
       const innerPoly = parseExpression(inner);
       const na = innerPoly.a.mul(multiplier);
@@ -498,6 +501,7 @@ function buildSubstitutionSteps(
 }
 
 function scoreCoeff(coeff: Fraction): number {
+  if (coeff.isZero()) return -9999;
   if (coeff.isOne()) return 100;
   if (coeff.isMinusOne()) return 90;
   if (coeff.isInteger()) {
@@ -520,40 +524,83 @@ function buildEliminationSteps(
 ): MethodSolution {
   const steps: StepExplanation[] = [];
 
-  // Determine whether to eliminate x or y:
-  // If one of them already has equal or opposite coefficients:
   const xCoeff1 = eq1.a;
   const xCoeff2 = eq2.a;
   const yCoeff1 = eq1.b;
   const yCoeff2 = eq2.b;
 
-  // Check LCM for x vs y
-  // Only deal with integers when possible (if fractional, clear denominators first)
-  const xLcm = Fraction.lcm(xCoeff1.abs().num * xCoeff2.abs().den, xCoeff2.abs().num * xCoeff1.abs().den);
-  const yLcm = Fraction.lcm(yCoeff1.abs().num * yCoeff2.abs().den, yCoeff2.abs().num * yCoeff1.abs().den);
+  const canEliminateX = !xCoeff1.isZero() && !xCoeff2.isZero();
+  const canEliminateY = !yCoeff1.isZero() && !yCoeff2.isZero();
 
-  // Preference:
+  if (!canEliminateX && !canEliminateY) {
+    // Decoupled case: e.g. x = 3, y = 4
+    const var1 = eq1.b.isZero() ? 'x' : 'y';
+    const val1 = var1 === 'x' ? xSol : ySol;
+    const var2 = eq2.b.isZero() ? 'x' : 'y';
+    const val2 = var2 === 'x' ? xSol : ySol;
+
+    steps.push({
+      title: '第一步：观察方程，未知数已天然分离',
+      desc: `方程①只含未知数 $${var1}$，方程②只含未知数 $${var2}$，两方程已分别化为一元一次方程，无需加减消元即可直接求解。`,
+      mathTeX: `\\begin{cases} ${formatEquationTeX(eq1.a, eq1.b, eq1.c)} & \\text{①} \\\\ ${formatEquationTeX(
+        eq2.a,
+        eq2.b,
+        eq2.c
+      )} & \\text{②} \\end{cases}`,
+    });
+
+    steps.push({
+      title: '第二步：分别解一元一次方程',
+      desc: `解方程①得 $${var1} = ${val1.toTeX()}$；解方程②得 $${var2} = ${val2.toTeX()}$。`,
+      mathTeX: `${var1} = ${val1.toTeX()}, \\quad ${var2} = ${val2.toTeX()}`,
+    });
+
+    steps.push({
+      title: '第三步：写出方程组的解',
+      desc: '联立写出最终结果：',
+      mathTeX: `\\therefore \\text{原方程组的解为：}\\quad ${solutionTeX}`,
+    });
+
+    return {
+      name: '加减消元法',
+      methodKey: 'elimination',
+      coreIdea: '当两方程各仅含一个不同未知数时，实质已完成消元，直接分别求解即可。',
+      recommended,
+      steps,
+      solutionTeX,
+    };
+  }
+
+  // Check LCM for x vs y
+  const xLcm = canEliminateX
+    ? Fraction.lcm(xCoeff1.abs().num * xCoeff2.abs().den, xCoeff2.abs().num * xCoeff1.abs().den)
+    : 999999n;
+  const yLcm = canEliminateY
+    ? Fraction.lcm(yCoeff1.abs().num * yCoeff2.abs().den, yCoeff2.abs().num * yCoeff1.abs().den)
+    : 999999n;
+
   let eliminateVar: 'x' | 'y' = 'y';
-  // If x coefficients are opposite or equal:
-  if (xCoeff1.abs().equals(xCoeff2.abs())) {
+  if (canEliminateX && !canEliminateY) {
     eliminateVar = 'x';
-  } else if (yCoeff1.abs().equals(yCoeff2.abs())) {
+  } else if (!canEliminateX && canEliminateY) {
     eliminateVar = 'y';
-  } else if (xLcm < yLcm) {
-    eliminateVar = 'x';
   } else {
-    eliminateVar = 'y';
+    if (xCoeff1.abs().equals(xCoeff2.abs())) {
+      eliminateVar = 'x';
+    } else if (yCoeff1.abs().equals(yCoeff2.abs())) {
+      eliminateVar = 'y';
+    } else if (xLcm < yLcm) {
+      eliminateVar = 'x';
+    } else {
+      eliminateVar = 'y';
+    }
   }
 
   const c1 = eliminateVar === 'x' ? xCoeff1 : yCoeff1;
   const c2 = eliminateVar === 'x' ? xCoeff2 : yCoeff2;
   const otherVar = eliminateVar === 'x' ? 'y' : 'x';
 
-  // Find multipliers m1 and m2 so that |m1 * c1| = |m2 * c2| = targetCoeff
-  // For simplicity with integer / fraction coefficients:
-  // m1 = c2.abs().num * c1.den, m2 = c1.abs().num * c2.den reduced by GCD
   const targetLcm = eliminateVar === 'x' ? xLcm : yLcm;
-  // Let m1 = targetLcm / (c1.num / c1.den)
   const m1 = new Fraction(targetLcm, 1n).div(c1.abs());
   const m2 = new Fraction(targetLcm, 1n).div(c2.abs());
 

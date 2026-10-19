@@ -27,8 +27,8 @@ export const HomeworkExportModal: React.FC<HomeworkExportModalProps> = ({
     const lines: string[] = [];
     lines.push(`【初中数学作业规范答题】`);
     lines.push(`解方程组：`);
-    lines.push(`  ① ${analysis.line1.texForm.replace(/\\frac\{(\d+)\}\{(\d+)\}/g, '$1/$2')}`);
-    lines.push(`  ② ${analysis.line2.texForm.replace(/\\frac\{(\d+)\}\{(\d+)\}/g, '$1/$2')}`);
+    lines.push(`  ① ${analysis.line1.texForm.replace(/-\\frac\{(\d+)\}\{(\d+)\}/g, '-$1/$2').replace(/\\frac\{(\d+)\}\{(\d+)\}/g, '$1/$2')}`);
+    lines.push(`  ② ${analysis.line2.texForm.replace(/-\\frac\{(\d+)\}\{(\d+)\}/g, '-$1/$2').replace(/\\frac\{(\d+)\}\{(\d+)\}/g, '$1/$2')}`);
     lines.push(``);
     lines.push(`【解题方法：${solMethod.name}】`);
     lines.push(`解：`);

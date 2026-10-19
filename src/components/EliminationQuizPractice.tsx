@@ -103,6 +103,14 @@ export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = (
   };
 
   const handleCheck = () => {
+    if (!userX.trim() || !userY.trim()) {
+      setFeedback({
+        status: 'error',
+        message: '请先在输入框中填入你计算得出的 x 和 y 的具体数值（如 3 或 7/3）！',
+      });
+      return;
+    }
+
     // Check answer values
     const analysis = solveLinearSystem(currentProblem.eq1, currentProblem.eq2);
     if (!analysis.solution) return;
@@ -114,13 +122,13 @@ export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = (
     let inputYFrac: Fraction | null = null;
 
     try {
-      inputXFrac = Fraction.from(userX);
+      inputXFrac = Fraction.from(userX.trim());
     } catch {
       // not parsed
     }
 
     try {
-      inputYFrac = Fraction.from(userY);
+      inputYFrac = Fraction.from(userY.trim());
     } catch {
       // not parsed
     }
