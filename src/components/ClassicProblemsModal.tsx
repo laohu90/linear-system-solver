@@ -1,29 +1,42 @@
 import React, { useState } from 'react';
-import { X, BookOpen, ChevronRight, Check } from 'lucide-react';
+import { X, BookOpen, ChevronRight } from 'lucide-react';
 import { PRESET_PROBLEMS, PresetProblem } from '../data/presetProblems';
 import { parseLinearEquation, EquationStandard } from '../utils/equation';
+import { Language, translations } from '../i18n/translations';
 
 interface ClassicProblemsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectProblem: (eq1: EquationStandard, eq2: EquationStandard, title?: string) => void;
+  lang: Language;
 }
 
 export const ClassicProblemsModal: React.FC<ClassicProblemsModalProps> = ({
   isOpen,
   onClose,
   onSelectProblem,
+  lang,
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('全部');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const t = translations[lang];
+  const isZh = lang === 'zh';
 
   if (!isOpen) return null;
 
-  const categories = ['全部', '基础练习', '中考常考', '变式去括号与去分母', '特殊解判定', '经典实际应用题'];
+  const categoryOptions = [
+    { key: 'all', label: t.catAll },
+    { key: 'basic', label: t.catBasic, zh: '基础练习', en: 'Foundations' },
+    { key: 'exam', label: t.catExam, zh: '中考常考', en: 'Exam Standards' },
+    { key: 'transform', label: t.catTransform, zh: '变式去括号与去分母', en: 'Brackets & Fractions' },
+    { key: 'special', label: t.catSpecial, zh: '特殊解判定', en: 'Special Cases' },
+    { key: 'applied', label: t.catApplied, zh: '经典实际应用题', en: 'Word Problems' },
+  ];
 
-  const filteredProblems =
-    selectedCategory === '全部'
-      ? PRESET_PROBLEMS
-      : PRESET_PROBLEMS.filter((p) => p.category === selectedCategory);
+  const filteredProblems = PRESET_PROBLEMS.filter((p) => {
+    if (selectedCategory === 'all') return true;
+    const opt = categoryOptions.find((o) => o.key === selectedCategory);
+    return opt && (p.category === opt.zh || p.categoryEn === opt.en);
+  });
 
   const handleSelect = (prob: PresetProblem) => {
     try {
@@ -32,7 +45,7 @@ export const ClassicProblemsModal: React.FC<ClassicProblemsModalProps> = ({
       onSelectProblem(
         { a: parsed1.a, b: parsed1.b, c: parsed1.c, rawStr: prob.eq1Str },
         { a: parsed2.a, b: parsed2.b, c: parsed2.c, rawStr: prob.eq2Str },
-        prob.title
+        isZh ? prob.title : prob.titleEn
       );
       onClose();
     } catch (e) {
@@ -47,7 +60,7 @@ export const ClassicProblemsModal: React.FC<ClassicProblemsModalProps> = ({
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/70">
           <div className="flex items-center gap-2">
             <BookOpen className="w-5 h-5 text-blue-600" />
-            <h3 className="text-base font-bold text-slate-900">初中经典二元一次方程组精选题库</h3>
+            <h3 className="text-base font-bold text-slate-900">{t.presetsTitle}</h3>
           </div>
           <button
             onClick={onClose}
@@ -59,17 +72,17 @@ export const ClassicProblemsModal: React.FC<ClassicProblemsModalProps> = ({
 
         {/* Categories Bar */}
         <div className="flex items-center gap-1.5 px-6 py-3 border-b border-slate-100 overflow-x-auto text-xs shrink-0">
-          {categories.map((cat) => (
+          {categoryOptions.map((opt) => (
             <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
+              key={opt.key}
+              onClick={() => setSelectedCategory(opt.key)}
               className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors font-medium ${
-                selectedCategory === cat
+                selectedCategory === opt.key
                   ? 'bg-blue-600 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
               }`}
             >
-              {cat}
+              {opt.label}
             </button>
           ))}
         </div>
@@ -85,10 +98,10 @@ export const ClassicProblemsModal: React.FC<ClassicProblemsModalProps> = ({
               <div className="space-y-1.5 max-w-xl">
                 <div className="flex items-center gap-2 text-xs">
                   <span className="font-semibold text-slate-900 group-hover:text-blue-700 transition-colors">
-                    {prob.title}
+                    {isZh ? prob.title : prob.titleEn}
                   </span>
                   <span className="text-[11px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-mono">
-                    {prob.category}
+                    {isZh ? prob.category : prob.categoryEn}
                   </span>
                   <span
                     className={`text-[10px] px-1.5 py-0.2 rounded font-medium ${
@@ -99,28 +112,31 @@ export const ClassicProblemsModal: React.FC<ClassicProblemsModalProps> = ({
                         : 'bg-amber-50 text-amber-700'
                     }`}
                   >
-                    {prob.difficulty}
+                    {isZh ? prob.difficulty : prob.difficultyEn}
                   </span>
                 </div>
 
                 {prob.applicationContext ? (
                   <div className="p-2.5 bg-slate-50 rounded-lg text-xs text-slate-700 space-y-1">
-                    <p className="font-serif italic text-slate-800">“{prob.applicationContext.story}”</p>
+                    <p className="font-serif italic text-slate-800">
+                      “{isZh ? prob.applicationContext.story : prob.applicationContext.storyEn}”
+                    </p>
                     <div className="text-[11px] text-slate-500">
-                      <strong>设元与列式：</strong> {prob.applicationContext.letVars}
+                      <strong>{t.setupFormula}</strong>{' '}
+                      {isZh ? prob.applicationContext.letVars : prob.applicationContext.letVarsEn}
                     </div>
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-500">{prob.desc}</p>
+                  <p className="text-xs text-slate-500">{isZh ? prob.desc : prob.descEn}</p>
                 )}
 
                 <div className="font-mono text-xs text-blue-700 font-semibold bg-blue-50/60 inline-block px-2.5 py-1 rounded">
-                  {prob.eq1Str} ； {prob.eq2Str}
+                  {prob.eq1Str} ; {prob.eq2Str}
                 </div>
               </div>
 
               <button className="flex items-center gap-1 text-xs font-semibold text-blue-600 group-hover:text-blue-800 shrink-0 self-start md:self-center">
-                <span>载入求解</span>
+                <span>{t.btnLoadProblem}</span>
                 <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
               </button>
             </div>

@@ -1,16 +1,24 @@
 export interface PresetProblem {
   id: string;
   category: '基础练习' | '中考常考' | '变式去括号与去分母' | '特殊解判定' | '经典实际应用题';
+  categoryEn: string;
   title: string;
+  titleEn: string;
   difficulty: '基础' | '中等' | '拔高';
+  difficultyEn: 'Basic' | 'Medium' | 'Advanced';
   eq1Str: string;
   eq2Str: string;
   desc?: string;
+  descEn?: string;
   applicationContext?: {
     story: string;
-    letVars: string; // 设未知数
-    equationsSetup: string; // 依题意列出方程组
-    answerConclusion: string; // 答语
+    storyEn: string;
+    letVars: string;
+    letVarsEn: string;
+    equationsSetup: string;
+    equationsSetupEn: string;
+    answerConclusion: string;
+    answerConclusionEn: string;
   };
 }
 
@@ -18,136 +26,200 @@ export const PRESET_PROBLEMS: PresetProblem[] = [
   {
     id: 'basic-1',
     category: '基础练习',
+    categoryEn: 'Foundations',
     title: '代入法入门：系数为 1 的典型方程组',
+    titleEn: 'Intro to Substitution: Variable with Coefficient 1',
     difficulty: '基础',
+    difficultyEn: 'Basic',
     eq1Str: 'x - y = 3',
     eq2Str: '3x - 8y = 14',
     desc: '初一课本基础例题。由①得 x = y + 3，再代入②中即可迅速消去 x。',
+    descEn: 'From ①, isolate x = y + 3, then substitute into ② to quickly eliminate x.',
   },
   {
     id: 'basic-2',
     category: '基础练习',
+    categoryEn: 'Foundations',
     title: '加减法入门：系数互为相反数',
+    titleEn: 'Intro to Elimination: Opposite Coefficients',
     difficulty: '基础',
+    difficultyEn: 'Basic',
     eq1Str: '2x + 3y = 12',
     eq2Str: '5x - 3y = 9',
     desc: '未知数 y 的系数分别为 +3 和 -3，互为相反数。只需两式相加 ① + ② 即可秒杀消去 y！',
+    descEn: 'Coefficients of y (+3 and -3) are opposites. Simply add ① + ② to eliminate y instantly!',
   },
   {
     id: 'basic-3',
     category: '基础练习',
+    categoryEn: 'Foundations',
     title: '加减法基础：系数相同相减消元',
+    titleEn: 'Elimination: Identical Coefficients',
     difficulty: '基础',
+    difficultyEn: 'Basic',
     eq1Str: '3x + 2y = 13',
     eq2Str: '3x - 2y = 5',
     desc: '未知数 x 的系数都是 3，相减 ① - ② 可以直接消去 x，解得 4y = 8。',
+    descEn: 'Coefficients of x are both 3. Subtracting ① - ② eliminates x directly to yield 4y = 8.',
   },
   {
     id: 'exam-1',
     category: '中考常考',
+    categoryEn: 'Exam Standards',
     title: '中考高频：一般整系数加减消元',
+    titleEn: 'Standard Elimination: General Integer Coefficients',
     difficulty: '中等',
+    difficultyEn: 'Medium',
     eq1Str: '2x + 3y = 7',
     eq2Str: '3x - 2y = 4',
     desc: '各未知数系数均不为 1。消去 y 时，①×2 + ②×3 异号相加，计算简捷不易出错。',
+    descEn: 'Multiply ① by 2 and ② by 3 to align y coefficients as +6 and -6, then add to eliminate.',
   },
   {
     id: 'exam-2',
     category: '中考常考',
+    categoryEn: 'Exam Standards',
     title: '运算陷阱：减法去括号变号易错题',
+    titleEn: 'Algebra Pitfall: Subtraction & Sign Distribution',
     difficulty: '中等',
+    difficultyEn: 'Medium',
     eq1Str: '4x - 3y = 11',
     eq2Str: '2x - 5y = 9',
     desc: '由 ②×2 得 4x - 10y = 18。再用 ① - ③ 时注意 -3y - (-10y) = +7y 的符号变号。',
+    descEn: 'Multiply ② by 2 to match x. When subtracting, beware that -3y - (-10y) turns into +7y.',
   },
   {
     id: 'exam-3',
     category: '中考常考',
+    categoryEn: 'Exam Standards',
     title: '分数解强化：结果为既约分数的经典计算',
+    titleEn: 'Fraction Solutions: Irreducible Rational Answers',
     difficulty: '中等',
+    difficultyEn: 'Medium',
     eq1Str: '3x + 5y = 8',
     eq2Str: '4x - 2y = 5',
     desc: '运算结果包含规范中考常见分数解，锻炼初中学生分数四则混合运算基本功。',
+    descEn: 'Demonstrates exact irreducible fraction answers without decimal approximations.',
   },
   {
     id: 'complex-1',
     category: '变式去括号与去分母',
+    categoryEn: 'Brackets & Fractions',
     title: '综合化简：含括号的二元一次方程组',
+    titleEn: 'Simplification: Systems with Parentheses',
     difficulty: '拔高',
+    difficultyEn: 'Advanced',
     eq1Str: '2(x - 1) = 3y + 4',
     eq2Str: '3(x + y) - 2(x - y) = 15',
     desc: '先去括号并整理为标准 ax + by = c 形式，再选择消元法求解。',
+    descEn: 'Expand brackets first to reduce into standard ax + by = c before choosing a method.',
   },
   {
     id: 'complex-2',
     category: '变式去括号与去分母',
+    categoryEn: 'Brackets & Fractions',
     title: '综合化简：含分数系数的方程组',
+    titleEn: 'Simplification: Fractional Coefficients (Clear Denominators)',
     difficulty: '拔高',
+    difficultyEn: 'Advanced',
     eq1Str: 'x/2 + y/3 = 5',
     eq2Str: 'x/3 - y/4 = 1',
     desc: '方程①两边同乘6去分母得 3x + 2y = 30；方程②两边同乘12得 4x - 3y = 12。',
+    descEn: 'Multiply ① by 6 to get 3x + 2y = 30; multiply ② by 12 to get 4x - 3y = 12.',
   },
   {
     id: 'special-1',
     category: '特殊解判定',
+    categoryEn: 'Special Cases',
     title: '两直线平行：无解情形',
+    titleEn: 'Parallel Lines: Inconsistent System (No Solution)',
     difficulty: '中等',
+    difficultyEn: 'Medium',
     eq1Str: '2x - 4y = 6',
     eq2Str: 'x - 2y = 5',
     desc: '两方程未知数系数成比例 (2:1 = -4:-2 = 2)，但常数项比为 6:5 ≠ 2。两直线平行，无公共解！',
+    descEn: 'Coefficients are proportional (2:1 = -4:-2), but constants are not (6:5). Parallel lines with no intersection.',
   },
   {
     id: 'special-2',
     category: '特殊解判定',
+    categoryEn: 'Special Cases',
     title: '两直线重合：无穷多组解',
+    titleEn: 'Coincident Lines: Dependent System (Infinitely Many Solutions)',
     difficulty: '中等',
+    difficultyEn: 'Medium',
     eq1Str: '3x - 6y = 9',
     eq2Str: 'x - 2y = 3',
     desc: '方程①两边同除以3与方程②完全相同，在平面直角坐标系中表示同一条直线，有无穷多组解。',
+    descEn: 'Both equations describe the exact same straight line in the plane, sharing infinite solutions.',
   },
   {
     id: 'app-1',
     category: '经典实际应用题',
+    categoryEn: 'Word Problems',
     title: '《孙子算经》经典：鸡兔同笼问题',
+    titleEn: 'Classic Problem: Chickens & Rabbits in a Cage',
     difficulty: '基础',
+    difficultyEn: 'Basic',
     eq1Str: 'x + y = 35',
     eq2Str: '2x + 4y = 94',
     desc: '笼子里有鸡和兔若干只，从上面数有 35 个头，从下面数有 94 只脚。问鸡和兔各有多少只？',
+    descEn: 'There are chickens and rabbits in a cage, totaling 35 heads and 94 feet. How many of each?',
     applicationContext: {
       story: '笼子里有鸡和兔若干只，从上面数有 35 个头，从下面数有 94 只脚。问笼中鸡、兔各有多少只？',
+      storyEn: 'A cage holds chickens and rabbits. From above, there are 35 heads; from below, there are 94 feet. Find the number of chickens and rabbits.',
       letVars: '设鸡有 x 只，兔有 y 只。',
+      letVarsEn: 'Let x be the number of chickens and y be the number of rabbits.',
       equationsSetup: '根据“共有35个头”得 x + y = 35；根据“共有94只脚（鸡2只脚，兔4只脚）”得 2x + 4y = 94。',
+      equationsSetupEn: 'Head count: x + y = 35; Foot count (chickens have 2, rabbits have 4): 2x + 4y = 94.',
       answerConclusion: '答：笼中有鸡 23 只，兔 12 只。',
+      answerConclusionEn: 'Answer: There are 23 chickens and 12 rabbits in the cage.',
     },
   },
   {
     id: 'app-2',
     category: '经典实际应用题',
+    categoryEn: 'Word Problems',
     title: '工程配套问题：螺栓与螺母配套',
+    titleEn: 'Industrial Production: Bolt & Nut Matching',
     difficulty: '中等',
+    difficultyEn: 'Medium',
     eq1Str: 'x + y = 22',
-    eq2Str: '2 * 12x = 20y',
+    eq2Str: '24x = 20y',
     desc: '某车间 22 名工人生产螺栓和螺母，每人每天平均生产螺栓 12 个或螺母 20 个。一个螺栓配两个螺母，如何分配工人才能刚好配套？',
+    descEn: '22 workers produce bolts (12/day) and nuts (20/day). Each bolt requires 2 nuts. How many workers for each?',
     applicationContext: {
       story: '某机械厂车间有 22 名工人生产螺栓和螺母。每人每天平均生产螺栓 12 个或螺母 20 个。一个螺栓需配两个螺母。应分配多少人生产螺栓，多少人生产螺母，才能使每天生产的产品刚好配套？',
+      storyEn: 'A workshop has 22 workers producing bolts and nuts. Each worker produces 12 bolts or 20 nuts per day. Each bolt requires 2 nuts. How should workers be allocated to match production?',
       letVars: '设安排 x 名工人生产螺栓，y 名工人生产螺母。',
-      equationsSetup: '根据工人总数得 x + y = 22；根据一个螺栓配两个螺母（即螺母数 = 2 × 螺栓数）得 20y = 2 × 12x。',
+      letVarsEn: 'Let x workers produce bolts and y workers produce nuts.',
+      equationsSetup: '根据工人总数得 x + y = 22；根据一个螺栓配两个螺母得 20y = 2 × 12x (即 24x = 20y)。',
+      equationsSetupEn: 'Total workers: x + y = 22; Matching ratio (nuts = 2 × bolts): 20y = 2 × (12x) ⟹ 24x = 20y.',
       answerConclusion: '答：应安排 10 名工人生产螺栓，12 名工人生产螺母。',
+      answerConclusionEn: 'Answer: Assign 10 workers to produce bolts and 12 workers to produce nuts.',
     },
   },
   {
     id: 'app-3',
     category: '经典实际应用题',
+    categoryEn: 'Word Problems',
     title: '行程与流水航行：顺水与逆水航行问题',
+    titleEn: 'Motion Problem: River Boat Upstream & Downstream Current',
     difficulty: '拔高',
+    difficultyEn: 'Advanced',
     eq1Str: '2x + 2y = 80',
     eq2Str: '2.5x - 2.5y = 80',
     desc: '一艘轮船在两个码头之间航行，顺水航行需 2 小时，逆水航行需 2.5 小时。两码头间距离为 80 千米。求轮船在静水中的速度和水流速度。',
+    descEn: 'A boat travels 80 km between ports: 2 hours downstream and 2.5 hours upstream. Find the boat speed and river current speed.',
     applicationContext: {
       story: '一艘轮船在 A、B 两个码头之间航行。顺水航行需 2 小时，逆水航行需 2.5 小时。已知 A、B 两码头间的航程为 80 千米。求轮船在静水中的速度和水流的速度。',
+      storyEn: 'A boat travels 80 km between ports A and B. It takes 2 hours downstream and 2.5 hours upstream. Find still-water speed and current speed.',
       letVars: '设轮船在静水中的航速为 x 千米/时，水流速度为 y 千米/时。',
-      equationsSetup: '顺水速度为 (x+y)，航程等式：2(x + y) = 80；逆水速度为 (x-y)，航程等式：2.5(x - y) = 80。',
+      letVarsEn: 'Let x km/h be the boat speed in still water and y km/h be the river current speed.',
+      equationsSetup: '顺水航程：2(x + y) = 80；逆水航程：2.5(x - y) = 80。',
+      equationsSetupEn: 'Downstream: 2(x + y) = 80; Upstream: 2.5(x - y) = 80.',
       answerConclusion: '答：轮船在静水中的航行速度为 36 千米/时，水流速度为 4 千米/时。',
+      answerConclusionEn: 'Answer: Boat speed in still water is 36 km/h, and river current speed is 4 km/h.',
     },
   },
 ];

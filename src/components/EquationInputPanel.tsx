@@ -3,12 +3,14 @@ import { Sparkles, ArrowUpDown, RotateCcw, BookOpen, AlertCircle, Edit3, Grid } 
 import { MathView } from './MathView';
 import { EquationStandard, parseLinearEquation, formatSystemTeX } from '../utils/equation';
 import { Fraction } from '../utils/fraction';
+import { Language, translations } from '../i18n/translations';
 
 interface EquationInputPanelProps {
   eq1: EquationStandard;
   eq2: EquationStandard;
   onUpdate: (eq1: EquationStandard, eq2: EquationStandard) => void;
   onOpenPresets: () => void;
+  lang?: Language;
 }
 
 export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
@@ -16,7 +18,9 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
   eq2,
   onUpdate,
   onOpenPresets,
+  lang = 'en',
 }) => {
+  const t = translations[lang];
   const [mode, setMode] = useState<'standard' | 'freeform'>('standard');
 
   // Local state for standard inputs
@@ -34,7 +38,7 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
 
   const [inputError, setInputError] = useState<string | null>(null);
 
-  // Sync when eq1 / eq2 prop change from outside (e.g. preset selection)
+  // Sync when eq1 / eq2 prop change from outside
   React.useEffect(() => {
     setA1(eq1.a.toString());
     setB1(eq1.b.toString());
@@ -69,11 +73,11 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
       const fracC2 = Fraction.from(nextC2 || '0');
 
       if (fracA1.isZero() && fracB1.isZero()) {
-        setInputError('方程①中 x 和 y 的系数不能同时为 0');
+        setInputError(t.errorCoeffZero);
         return;
       }
       if (fracA2.isZero() && fracB2.isZero()) {
-        setInputError('方程②中 x 和 y 的系数不能同时为 0');
+        setInputError(t.errorCoeffZero);
         return;
       }
 
@@ -83,7 +87,7 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
         { a: fracA2, b: fracB2, c: fracC2 }
       );
     } catch (e: any) {
-      setInputError(e.message || '输入格式有误，请输入整数、小数或如 2/3 的分数');
+      setInputError(e.message || 'Invalid format: enter integers, decimals, or fractions like 2/3');
     }
   };
 
@@ -97,7 +101,7 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
         { a: parsed2.a, b: parsed2.b, c: parsed2.c, rawStr: str2 }
       );
     } catch (e: any) {
-      setInputError(e.message || '方程解析失败，请检查等号与未知数符号');
+      setInputError(e.message || 'Parsing failed: please check equals sign and variable symbols');
     }
   };
 
@@ -106,8 +110,8 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
   };
 
   const handleReset = () => {
-    const defaultEq1 = { a: new Fraction(2n), b: new Fraction(3n), c: new Fraction(7n) };
-    const defaultEq2 = { a: new Fraction(3n), b: new Fraction(-2n), c: new Fraction(4n) };
+    const defaultEq1 = { a: new Fraction(2n), b: new Fraction(3n), c: new Fraction(7n), rawStr: '2x + 3y = 7' };
+    const defaultEq2 = { a: new Fraction(3n), b: new Fraction(-2n), c: new Fraction(4n), rawStr: '3x - 2y = 4' };
     setA1('2');
     setB1('3');
     setC1('7');
@@ -121,11 +125,9 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
   };
 
   const handleGenerateRandom = () => {
-    // Generate a random high-quality secondary school problem with clean integer or small fraction solution
-    const x = Math.floor(Math.random() * 9) - 4; // -4 to 4
-    const y = Math.floor(Math.random() * 9) - 4; // -4 to 4
+    const x = Math.floor(Math.random() * 9) - 4;
+    const y = Math.floor(Math.random() * 9) - 4;
 
-    // Pick small non-zero coefficients
     const coeffs = [-3, -2, -1, 1, 2, 3, 4, 5];
     const a1Val = coeffs[Math.floor(Math.random() * coeffs.length)];
     let b1Val = coeffs[Math.floor(Math.random() * coeffs.length)];
@@ -133,7 +135,6 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
     let a2Val = coeffs[Math.floor(Math.random() * coeffs.length)];
     let b2Val = coeffs[Math.floor(Math.random() * coeffs.length)];
 
-    // Ensure not parallel
     if (a1Val * b2Val - a2Val * b1Val === 0) {
       b2Val = b2Val === 1 ? 2 : 1;
     }
@@ -141,8 +142,11 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
     const c1Val = a1Val * x + b1Val * y;
     const c2Val = a2Val * x + b2Val * y;
 
-    const newEq1 = { a: new Fraction(BigInt(a1Val)), b: new Fraction(BigInt(b1Val)), c: new Fraction(BigInt(c1Val)) };
-    const newEq2 = { a: new Fraction(BigInt(a2Val)), b: new Fraction(BigInt(b2Val)), c: new Fraction(BigInt(c2Val)) };
+    const s1 = `${a1Val === 1 ? '' : a1Val === -1 ? '-' : a1Val}x ${b1Val >= 0 ? '+ ' + (b1Val === 1 ? '' : b1Val) : '- ' + (b1Val === -1 ? '' : -b1Val)}y = ${c1Val}`;
+    const s2 = `${a2Val === 1 ? '' : a2Val === -1 ? '-' : a2Val}x ${b2Val >= 0 ? '+ ' + (b2Val === 1 ? '' : b2Val) : '- ' + (b2Val === -1 ? '' : -b2Val)}y = ${c2Val}`;
+
+    const newEq1 = { a: new Fraction(BigInt(a1Val)), b: new Fraction(BigInt(b1Val)), c: new Fraction(BigInt(c1Val)), rawStr: s1 };
+    const newEq2 = { a: new Fraction(BigInt(a2Val)), b: new Fraction(BigInt(b2Val)), c: new Fraction(BigInt(c2Val)), rawStr: s2 };
 
     setA1(a1Val.toString());
     setB1(b1Val.toString());
@@ -150,6 +154,8 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
     setA2(a2Val.toString());
     setB2(b2Val.toString());
     setC2(c2Val.toString());
+    setFree1(s1);
+    setFree2(s2);
 
     setInputError(null);
     onUpdate(newEq1, newEq2);
@@ -161,12 +167,10 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
         <div>
           <h2 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <span>输入二元一次方程组</span>
-            <span className="text-xs font-normal text-slate-500">（支持初一代入法与加减法解析）</span>
+            <span>{t.inputTitle}</span>
+            <span className="text-xs font-normal text-slate-500">{t.inputSubtitle}</span>
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            可填入整数、小数或分数（如 2/3、-5/4），系统将进行精确代数化简。
-          </p>
+          <p className="text-xs text-slate-500 mt-0.5">{t.inputHint}</p>
         </div>
 
         {/* Input Mode Selector */}
@@ -178,7 +182,7 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
             }`}
           >
             <Grid className="w-3.5 h-3.5" />
-            <span>系数填空</span>
+            <span>{t.modeStandard}</span>
           </button>
           <button
             onClick={() => setMode('freeform')}
@@ -187,7 +191,7 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
             }`}
           >
             <Edit3 className="w-3.5 h-3.5" />
-            <span>自由整式输入</span>
+            <span>{t.modeFreeform}</span>
           </button>
         </div>
       </div>
@@ -201,7 +205,7 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold text-blue-700 flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-blue-600" />
-                  <span>方程 ①</span>
+                  <span>{t.eq1Label}</span>
                 </span>
                 <span className="text-xs text-slate-400 font-mono">a₁x + b₁y = c₁</span>
               </div>
@@ -256,7 +260,7 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold text-amber-700 flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-amber-600" />
-                  <span>方程 ②</span>
+                  <span>{t.eq2Label}</span>
                 </span>
                 <span className="text-xs text-slate-400 font-mono">a₂x + b₂y = c₂</span>
               </div>
@@ -310,7 +314,7 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
           <div className="space-y-3">
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">
-                方程 ① 表达式（支持带括号、分数，如 2(x-1) = 3y + 4 或 x/2 + y/3 = 5）：
+                {t.freeformHelp1}
               </label>
               <input
                 type="text"
@@ -319,13 +323,13 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
                   setFree1(e.target.value);
                   commitFreeform(e.target.value, free2);
                 }}
-                placeholder="2x + 3y = 7"
+                placeholder={t.freeformPlaceholder1}
                 className="w-full px-3 py-2 font-mono text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">
-                方程 ② 表达式：
+                {t.freeformHelp2}
               </label>
               <input
                 type="text"
@@ -334,7 +338,7 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
                   setFree2(e.target.value);
                   commitFreeform(free1, e.target.value);
                 }}
-                placeholder="3x - 2y = 4"
+                placeholder={t.freeformPlaceholder2}
                 className="w-full px-3 py-2 font-mono text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
             </div>
@@ -352,7 +356,7 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
         {/* Live LaTeX System Preview */}
         <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-xs font-medium text-slate-500 shrink-0">当前方程组：</span>
+            <span className="text-xs font-medium text-slate-500 shrink-0">{t.currentSystem}</span>
             <MathView math={formatSystemTeX(eq1, eq2)} />
           </div>
 
@@ -360,30 +364,30 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
           <div className="flex items-center gap-1.5 flex-wrap">
             <button
               onClick={handleGenerateRandom}
-              title="生成初一典型题"
+              title={t.btnRandom}
               className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-              <span>随机练习题</span>
+              <span>{t.btnRandom}</span>
             </button>
             <button
               onClick={onOpenPresets}
-              title="初一经典题库与实际应用题"
+              title={t.btnPresets}
               className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
             >
               <BookOpen className="w-3.5 h-3.5" />
-              <span>题库与应用题</span>
+              <span>{t.btnPresets}</span>
             </button>
             <button
               onClick={handleSwap}
-              title="互换方程①与方程②"
+              title={t.btnSwap}
               className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
             >
               <ArrowUpDown className="w-4 h-4" />
             </button>
             <button
               onClick={handleReset}
-              title="恢复默认"
+              title={t.btnReset}
               className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
             >
               <RotateCcw className="w-4 h-4" />

@@ -1,25 +1,26 @@
 import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
-import { Award, CheckCircle, RefreshCw, Sparkles, HelpCircle, ArrowRight } from 'lucide-react';
+import { Award, CheckCircle, RefreshCw, HelpCircle, ArrowRight } from 'lucide-react';
 import { MathView } from './MathView';
 import { EquationStandard, solveLinearSystem, formatEquationTeX } from '../utils/equation';
 import { Fraction } from '../utils/fraction';
+import { Language, translations } from '../i18n/translations';
 
 interface EliminationQuizPracticeProps {
   onLoadProblem: (eq1: EquationStandard, eq2: EquationStandard) => void;
+  lang?: Language;
 }
 
 interface PracticeProblem {
   id: string;
   name: string;
+  nameEn: string;
   eq1: EquationStandard;
   eq2: EquationStandard;
   bestVar: 'x' | 'y';
   bestMethod: 'substitution' | 'elimination';
   subTransformHint: string;
-  elimM1: number;
-  elimM2: number;
-  elimOp: '+' | '-';
+  subTransformHintEn: string;
   xAns: string;
   yAns: string;
 }
@@ -28,57 +29,57 @@ const QUIZ_BANK: PracticeProblem[] = [
   {
     id: 'q1',
     name: '基础题：加减消元相反数秒杀',
+    nameEn: 'Basic: Elimination with Opposite Coefficients',
     eq1: { a: new Fraction(2n), b: new Fraction(3n), c: new Fraction(13n) },
     eq2: { a: new Fraction(4n), b: new Fraction(-3n), c: new Fraction(5n) },
     bestVar: 'y',
     bestMethod: 'elimination',
-    subTransformHint: '观察 y 的系数为 +3 与 -3，互为相反数，加减消元最快！',
-    elimM1: 1,
-    elimM2: 1,
-    elimOp: '+',
+    subTransformHint: '观察 y 的系数为 +3 与 -3，互为相反数，两式相加 ① + ② 即可秒杀消去 y！',
+    subTransformHintEn: 'Notice the coefficients of y are +3 and -3 (opposites). Adding Equations ① + ② eliminates y directly!',
     xAns: '3',
     yAns: '7/3',
   },
   {
     id: 'q2',
     name: '基础题：代入法含系数1的方程',
+    nameEn: 'Basic: Substitution with Coefficient 1',
     eq1: { a: new Fraction(1n), b: new Fraction(-2n), c: new Fraction(1n) },
     eq2: { a: new Fraction(3n), b: new Fraction(4n), c: new Fraction(13n) },
     bestVar: 'x',
     bestMethod: 'substitution',
-    subTransformHint: '方程①中 x 的系数为 1，变形得 x = 2y + 1 最为简便！',
-    elimM1: 3,
-    elimM2: 1,
-    elimOp: '-',
+    subTransformHint: '方程①中 x 的系数为 1，变形得 x = 2y + 1 再代入②中最为简便！',
+    subTransformHintEn: 'In Equation ①, x has coefficient 1. Isolate x = 2y + 1 and substitute into ② for a seamless solution.',
     xAns: '3',
     yAns: '1',
   },
   {
     id: 'q3',
     name: '提高题：乘倍数对齐系数',
+    nameEn: 'Intermediate: Multiply to Align Coefficients',
     eq1: { a: new Fraction(3n), b: new Fraction(2n), c: new Fraction(12n) },
     eq2: { a: new Fraction(2n), b: new Fraction(3n), c: new Fraction(13n) },
     bestVar: 'x',
     bestMethod: 'elimination',
-    subTransformHint: '消去 x 时，①×2 且 ②×3，使 x 系数均为 6。',
-    elimM1: 2,
-    elimM2: 3,
-    elimOp: '-',
+    subTransformHint: '消去 x 时，①×2 且 ②×3，使 x 系数均为 6，再两式相减即可。',
+    subTransformHintEn: 'To eliminate x, multiply ① by 2 and ② by 3 to get 6x in both equations, then subtract.',
     xAns: '2',
     yAns: '3',
   },
 ];
 
-export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = ({ onLoadProblem }) => {
+export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = ({
+  onLoadProblem,
+  lang = 'en',
+}) => {
+  const t = translations[lang];
+  const isZh = lang === 'zh';
+
   const [problemIndex, setProblemIndex] = useState(0);
   const currentProblem = QUIZ_BANK[problemIndex];
 
   // User input states
   const [chosenVar, setChosenVar] = useState<'x' | 'y' | null>(null);
   const [chosenMethod, setChosenMethod] = useState<'substitution' | 'elimination' | null>(null);
-  const [userM1, setUserM1] = useState('');
-  const [userM2, setUserM2] = useState('');
-  const [userOp, setUserOp] = useState<'+' | '-' | null>(null);
   const [userX, setUserX] = useState('');
   const [userY, setUserY] = useState('');
 
@@ -93,9 +94,6 @@ export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = (
     setProblemIndex(index);
     setChosenVar(null);
     setChosenMethod(null);
-    setUserM1('');
-    setUserM2('');
-    setUserOp(null);
     setUserX('');
     setUserY('');
     setFeedback({ status: 'idle', message: '' });
@@ -106,13 +104,12 @@ export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = (
     if (!userX.trim() || !userY.trim()) {
       setFeedback({
         status: 'error',
-        message: '请先在输入框中填入你计算得出的 x 和 y 的具体数值（如 3 或 7/3）！',
+        message: t.quizEmptyWarning,
       });
       return;
     }
 
-    // Check answer values
-    const analysis = solveLinearSystem(currentProblem.eq1, currentProblem.eq2);
+    const analysis = solveLinearSystem(currentProblem.eq1, currentProblem.eq2, lang);
     if (!analysis.solution) return;
 
     const realX = analysis.solution.x;
@@ -139,7 +136,7 @@ export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = (
     if (xCorrect && yCorrect) {
       setFeedback({
         status: 'success',
-        message: '太棒了！消元思路清晰，最终解完全正确！🎉',
+        message: t.quizSuccessMsg,
       });
       confetti({
         particleCount: 80,
@@ -149,12 +146,12 @@ export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = (
     } else if (xCorrect || yCorrect) {
       setFeedback({
         status: 'partial',
-        message: `其中一个未知数已算对，请仔细核对另一个代入计算过程！`,
+        message: t.quizPartialMsg,
       });
     } else {
       setFeedback({
         status: 'error',
-        message: '解与标准答案不一致，请检查符号和移项计算，可点击下方“解题思路提示”。',
+        message: t.quizErrorMsg,
       });
     }
   };
@@ -168,8 +165,8 @@ export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = (
             <Award className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-900">消元思维挑战与自测</h3>
-            <p className="text-xs text-slate-500">根据初一教学大纲设计：自主决策消元路径，巩固答题套路</p>
+            <h3 className="text-sm font-bold text-slate-900">{t.quizTitle}</h3>
+            <p className="text-xs text-slate-500">{t.quizSubtitle}</p>
           </div>
         </div>
 
@@ -180,13 +177,13 @@ export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = (
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            <span>换一题</span>
+            <span>{t.quizNext}</span>
           </button>
           <button
             onClick={() => onLoadProblem(currentProblem.eq1, currentProblem.eq2)}
             className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
           >
-            <span>载入计算器解析</span>
+            <span>{t.quizLoadToSolver}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -194,7 +191,9 @@ export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = (
 
       {/* Current Question Math */}
       <div className="my-5 p-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
-        <div className="text-xs font-semibold text-slate-500 mb-2">{currentProblem.name}</div>
+        <div className="text-xs font-semibold text-slate-500 mb-2">
+          {isZh ? currentProblem.name : currentProblem.nameEn}
+        </div>
         <MathView
           math={`\\begin{cases} ${formatEquationTeX(
             currentProblem.eq1.a,
@@ -213,9 +212,7 @@ export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = (
       <div className="space-y-4 text-xs">
         {/* Step 1: Choose Variable */}
         <div className="p-3 bg-slate-50/50 border border-slate-200/70 rounded-lg">
-          <div className="font-semibold text-slate-800 mb-2">
-            1. 观察两方程系数，你打算优先消去哪一个未知数？
-          </div>
+          <div className="font-semibold text-slate-800 mb-2">{t.quizStep1}</div>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setChosenVar('x')}
@@ -225,7 +222,7 @@ export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = (
                   : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
               }`}
             >
-              消去 x
+              {t.quizElimX}
             </button>
             <button
               onClick={() => setChosenVar('y')}
@@ -235,11 +232,17 @@ export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = (
                   : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
               }`}
             >
-              消去 y
+              {t.quizElimY}
             </button>
             {chosenVar && (
               <span className="text-slate-500">
-                {chosenVar === currentProblem.bestVar ? '✨ 极佳决策！' : '可行，计算时注意通分'}
+                {chosenVar === currentProblem.bestVar
+                  ? isZh
+                    ? '✨ 极佳决策！'
+                    : '✨ Excellent choice!'
+                  : isZh
+                  ? '可行，计算时注意通分'
+                  : 'Valid approach; watch your fractions'}
               </span>
             )}
           </div>
@@ -247,7 +250,7 @@ export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = (
 
         {/* Step 2: Choose Method */}
         <div className="p-3 bg-slate-50/50 border border-slate-200/70 rounded-lg">
-          <div className="font-semibold text-slate-800 mb-2">2. 你认为使用哪种消元方法更省时不易错？</div>
+          <div className="font-semibold text-slate-800 mb-2">{t.quizStep2}</div>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setChosenMethod('substitution')}
@@ -257,7 +260,7 @@ export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = (
                   : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
               }`}
             >
-              代入消元法
+              {t.methodSub}
             </button>
             <button
               onClick={() => setChosenMethod('elimination')}
@@ -267,11 +270,17 @@ export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = (
                   : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
               }`}
             >
-              加减消元法
+              {t.methodElim}
             </button>
             {chosenMethod && (
               <span className="text-slate-500">
-                {chosenMethod === currentProblem.bestMethod ? '👍 推荐方法' : '也可以顺利解出'}
+                {chosenMethod === currentProblem.bestMethod
+                  ? isZh
+                    ? '👍 推荐方法'
+                    : '👍 Optimal method'
+                  : isZh
+                  ? '也可以顺利解出'
+                  : 'Also works smoothly'}
               </span>
             )}
           </div>
@@ -279,9 +288,7 @@ export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = (
 
         {/* Step 3: Enter Solutions */}
         <div className="p-3 bg-slate-50/50 border border-slate-200/70 rounded-lg">
-          <div className="font-semibold text-slate-800 mb-2">
-            3. 请在草稿纸上完成化简演算，并填入你求得的最终解（支持整数或分数如 7/3）：
-          </div>
+          <div className="font-semibold text-slate-800 mb-2">{t.quizStep3}</div>
           <div className="flex flex-wrap items-center gap-4 text-sm">
             <div className="flex items-center gap-2">
               <span className="font-mono font-bold text-slate-700">x =</span>
@@ -289,7 +296,7 @@ export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = (
                 type="text"
                 value={userX}
                 onChange={(e) => setUserX(e.target.value)}
-                placeholder="例如: 3"
+                placeholder={isZh ? '例如: 3' : 'e.g. 3'}
                 className="w-24 px-2.5 py-1.5 text-center font-mono bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               />
             </div>
@@ -299,7 +306,7 @@ export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = (
                 type="text"
                 value={userY}
                 onChange={(e) => setUserY(e.target.value)}
-                placeholder="例如: 7/3"
+                placeholder={isZh ? '例如: 7/3' : 'e.g. 7/3'}
                 className="w-24 px-2.5 py-1.5 text-center font-mono bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               />
             </div>
@@ -307,14 +314,14 @@ export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = (
               onClick={handleCheck}
               className="px-4 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-md transition-colors"
             >
-              提交核对
+              {t.quizSubmit}
             </button>
             <button
               onClick={() => setShowHint(!showHint)}
               className="flex items-center gap-1 text-xs text-amber-700 hover:underline"
             >
               <HelpCircle className="w-3.5 h-3.5" />
-              <span>{showHint ? '隐藏提示' : '解题提示'}</span>
+              <span>{showHint ? t.quizHideHint : t.quizHint}</span>
             </button>
           </div>
         </div>
@@ -322,8 +329,8 @@ export const EliminationQuizPractice: React.FC<EliminationQuizPracticeProps> = (
         {/* Hint Box */}
         {showHint && (
           <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 leading-relaxed">
-            <div className="font-semibold mb-1">💡 老师点拨：</div>
-            <p>{currentProblem.subTransformHint}</p>
+            <div className="font-semibold mb-1">💡 {t.quizHintTitle}</div>
+            <p>{isZh ? currentProblem.subTransformHint : currentProblem.subTransformHintEn}</p>
           </div>
         )}
 

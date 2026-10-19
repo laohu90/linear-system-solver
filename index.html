@@ -1,22 +1,129 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>二元一次方程组求解器 - 初一代入消元与加减消元计算器</title>
-    <meta name="description" content="专业初中数学工具：提供代入消元法与加减消元法完整规范解答步骤、精确分数化简、函数图象交点可视化、交互式消元自测与经典应用题库。" />
-    <meta property="og:title" content="二元一次方程组求解器 - 初一代入消元与加减消元计算器" />
-    <meta property="og:description" content="专业初中数学工具：提供代入消元法与加减消元法完整规范解答步骤、精确分数化简、函数图象交点可视化、交互式消元自测与经典应用题库。" />
+    <title>Linear System Solver – Step-by-Step Substitution & Elimination Calculator | 二元一次方程组求解器</title>
+    <meta
+      name="description"
+      content="Free step-by-step 2x2 system of linear equations solver. Calculate solutions using substitution and elimination methods with exact fractions, 2D graph intersection, and standard homework format. 专业初一代数二元一次方程组计算器。"
+    />
+    <meta
+      name="keywords"
+      content="system of linear equations solver, linear equations calculator with steps, substitution method calculator, elimination method calculator, solve system of equations step by step, 2 variable system of equations, simultaneous equations solver, 2x2 linear system solver, 二元一次方程组求解器, 二元一次方程组计算器, 代入消元法计算器, 加减消元法计算器, 解二元一次方程组带步骤, 初一代数方程组"
+    />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <link rel="canonical" href="https://ais-dev-yct2f7nbyt62pvkoecq26g-789584051341.asia-southeast1.run.app/" />
+    <link rel="alternate" hreflang="x-default" href="https://ais-dev-yct2f7nbyt62pvkoecq26g-789584051341.asia-southeast1.run.app/" />
+    <link rel="alternate" hreflang="en" href="https://ais-dev-yct2f7nbyt62pvkoecq26g-789584051341.asia-southeast1.run.app/?lang=en" />
+    <link rel="alternate" hreflang="zh" href="https://ais-dev-yct2f7nbyt62pvkoecq26g-789584051341.asia-southeast1.run.app/?lang=zh" />
+
+    <!-- OpenGraph Social Cards -->
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Linear System Solver" />
+    <meta property="og:title" content="Linear System Solver – Step-by-Step Substitution & Elimination Calculator" />
+    <meta
+      property="og:description"
+      content="Solve 2x2 systems of linear equations step by step using substitution and elimination methods. Features exact fraction calculations, 2D graph intersection, and homework exports."
+    />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="zh_CN" />
+
+    <!-- Twitter / X Cards -->
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <meta name="twitter:title" content="Linear System Solver – Step-by-Step Substitution & Elimination Calculator" />
+    <meta
+      name="twitter:description"
+      content="Solve 2x2 systems of linear equations step by step with exact fraction arithmetic, 2D coordinate graphs, and interactive quiz practice."
+    />
+
+    <!-- Fonts & Math Styling -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous" />
+
+    <!-- Schema.org JSON-LD Structured Data for Google Rich Snippets -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "@id": "/#app",
+          "name": "Linear System Solver",
+          "alternateName": "二元一次方程组求解器",
+          "applicationCategory": "EducationalApplication",
+          "operatingSystem": "All",
+          "description": "Interactive step-by-step solver for systems of 2 linear equations in two variables (2x2) using substitution and elimination methods with exact rational fraction arithmetic and 2D coordinate graph visualization.",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "featureList": [
+            "Step-by-step substitution method derivation",
+            "Step-by-step elimination (addition/subtraction) method derivation",
+            "Exact fraction and integer calculations without floating point errors",
+            "Interactive 2D Cartesian coordinate plane with line intersections",
+            "Standard homework format generator and print export",
+            "Interactive student quiz practice mode with hint guidance",
+            "Bilingual English and Chinese interface"
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "How do you solve a system of linear equations by substitution?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "To solve by substitution: 1) Choose an equation and solve for one variable (preferably one with a coefficient of 1 or -1) in terms of the other variable. 2) Substitute this expression into the other equation to get a single-variable linear equation. 3) Solve for that variable. 4) Back-substitute the numerical value into your expression to find the remaining variable."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "When should I use elimination instead of substitution?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Use the elimination method when variable coefficients are already identical, opposite, or easily matched by multiplying equations by their Least Common Multiple (LCM). This avoids fractions during intermediate steps. Use substitution when one variable already has a coefficient of 1 or -1."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What does it mean geometrically when a linear system has no solution or infinite solutions?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "A 2x2 system represents two straight lines in the coordinate plane. If the lines intersect at one point, there is a unique solution (x, y). If the lines are parallel with equal slopes and different intercepts, there is no solution. If the lines are coincident (identical), there are infinitely many solutions."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <!-- Crawler-friendly fallback content for search engines without JS execution -->
+    <noscript>
+      <div style="padding: 2rem; font-family: sans-serif; max-width: 800px; margin: 0 auto; line-height: 1.6;">
+        <h1>Linear System Solver & Elimination Calculator (二元一次方程组求解器)</h1>
+        <p>A comprehensive educational math calculator designed for secondary school algebra. Features complete step-by-step solutions for systems of two linear equations in two variables (ax + by = c) using both the Substitution Method (代入消元法) and the Elimination Method (加减消元法).</p>
+        <h2>Key Capabilities:</h2>
+        <ul>
+          <li>Exact fractional arithmetic: Irreducible fractions and whole integers.</li>
+          <li>Real-time 2D Cartesian graphing showing line equations and intersection coordinates.</li>
+          <li>Step-by-step algebraic breakdown with pedagogical tips and common error alerts.</li>
+          <li>Interactive elimination practice quizzes and classic word problem repository.</li>
+        </ul>
+      </div>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

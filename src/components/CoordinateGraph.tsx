@@ -1,12 +1,15 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { ZoomIn, ZoomOut, RotateCcw, Crosshair } from 'lucide-react';
 import { SystemAnalysis } from '../utils/equation';
+import { Language, translations } from '../i18n/translations';
 
 interface CoordinateGraphProps {
   analysis: SystemAnalysis;
+  lang?: Language;
 }
 
-export const CoordinateGraph: React.FC<CoordinateGraphProps> = ({ analysis }) => {
+export const CoordinateGraph: React.FC<CoordinateGraphProps> = ({ analysis, lang = 'en' }) => {
+  const t = translations[lang];
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -287,16 +290,16 @@ export const CoordinateGraph: React.FC<CoordinateGraphProps> = ({ analysis }) =>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5 font-medium text-blue-700">
             <span className="w-3.5 h-1 bg-blue-600 rounded-full inline-block" />
-            <span>直线 L₁ (方程①)</span>
+            <span>{t.line1Legend}</span>
           </div>
           <div className="flex items-center gap-1.5 font-medium text-amber-700">
             <span className="w-3.5 h-1 bg-amber-600 rounded-full inline-block" />
-            <span>直线 L₂ (方程②)</span>
+            <span>{t.line2Legend}</span>
           </div>
           {analysis.solution && (
             <div className="flex items-center gap-1.5 font-medium text-emerald-700">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block" />
-              <span>交点 P (方程组的解)</span>
+              <span>{t.pointLegend}</span>
             </div>
           )}
         </div>
@@ -310,21 +313,21 @@ export const CoordinateGraph: React.FC<CoordinateGraphProps> = ({ analysis }) =>
           )}
           <button
             onClick={() => setScale((s) => Math.min(s * 1.25, 100))}
-            title="放大网格"
+            title={t.zoomIn}
             className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded-md transition-colors"
           >
             <ZoomIn className="w-4 h-4" />
           </button>
           <button
             onClick={() => setScale((s) => Math.max(s * 0.8, 12))}
-            title="缩小网格"
+            title={t.zoomOut}
             className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded-md transition-colors"
           >
             <ZoomOut className="w-4 h-4" />
           </button>
           <button
             onClick={resetToCenter}
-            title="居中焦点"
+            title={t.resetView}
             className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded-md transition-colors"
           >
             <Crosshair className="w-4 h-4" />
@@ -354,7 +357,7 @@ export const CoordinateGraph: React.FC<CoordinateGraphProps> = ({ analysis }) =>
         {/* Floating status card for geometric conclusion */}
         <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur-sm border border-slate-200 rounded-lg p-2.5 shadow-sm max-w-sm pointer-events-none">
           <div className="text-xs font-semibold text-slate-800 mb-1 flex items-center gap-1.5">
-            <span>几何意义解读</span>
+            <span>{t.geoTitle}</span>
             <span
               className={`text-[11px] font-normal px-1.5 py-0.5 rounded ${
                 analysis.type === 'unique'
