@@ -45,13 +45,18 @@ export class Fraction {
     if (typeof val === 'bigint') return new Fraction(val, 1n);
     if (typeof val === 'number') {
       if (Number.isInteger(val)) return new Fraction(BigInt(val), 1n);
-      // Convert floating decimal like 0.75 to fraction
-      const s = val.toString();
+      // Convert floating decimal like 0.75 or scientific notation to fraction
+      let s = val.toString();
+      if (s.toLowerCase().includes('e')) {
+        s = val.toFixed(10).replace(/\.?0+$/, '');
+      }
       if (s.includes('.')) {
         const parts = s.split('.');
         const decLength = parts[1].length;
         const den = 10n ** BigInt(decLength);
-        const num = BigInt(parts[0]) * den + (val < 0 ? -1n : 1n) * BigInt(parts[1]);
+        const isNeg = val < 0;
+        const absInt = parts[0].replace('-', '');
+        const num = (BigInt(absInt) * den + BigInt(parts[1])) * (isNeg ? -1n : 1n);
         return new Fraction(num, den);
       }
       return new Fraction(BigInt(Math.round(val)), 1n);
