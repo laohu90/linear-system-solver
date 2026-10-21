@@ -1,4 +1,4 @@
-export type Language = 'en' | 'zh';
+export type Language = 'en' | 'es' | 'fr' | 'pt' | 'zh';
 
 export interface Translations {
   appTitle: string;
@@ -139,7 +139,8 @@ export interface Translations {
   switchLangPrompt: string;
 }
 
-export const translations: Record<Language, Translations> = {
+const enData = {
+
   en: {
     appTitle: 'Linear System Solver',
     appSubtitle: 'System of 2 Linear Equations · Step-by-Step Substitution & Elimination',
