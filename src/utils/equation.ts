@@ -261,7 +261,7 @@ function getLineProperties(eq: EquationStandard) {
 export function solveLinearSystem(
   eq1: EquationStandard,
   eq2: EquationStandard,
-  lang: 'en' | 'zh' = 'en'
+  lang: any = 'en'
 ): SystemAnalysis {
   const line1 = getLineProperties(eq1);
   const line2 = getLineProperties(eq2);

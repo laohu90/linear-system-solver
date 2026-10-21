@@ -16,20 +16,26 @@ import { CoordinateGraph } from './components/CoordinateGraph';
 import { EliminationQuizPractice } from './components/EliminationQuizPractice';
 import { ClassicProblemsModal } from './components/ClassicProblemsModal';
 import { HomeworkExportModal } from './components/HomeworkExportModal';
-import { Language, translations } from './i18n/translations';
+import { Language, SupportedLang, translations, resolveInitialLanguage } from './i18n/translations';
 
 export default function App() {
   // Language state: Default to English ('en') as requested, with fallback checking URL and storage
-  const [lang, setLang] = useState<Language>(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const urlLang = urlParams.get('lang');
-      if (urlLang === 'en' || urlLang === 'zh') return urlLang;
-      const stored = localStorage.getItem('app_lang');
-      if (stored === 'en' || stored === 'zh') return stored;
-    }
-    return 'en';
+  const [langState, setLangState] = useState<{ currentLang: SupportedLang; isAuto: boolean }>(() => {
+    const init = resolveInitialLanguage();
+    return { currentLang: init.lang, isAuto: init.isAuto };
   });
+  const lang = langState.currentLang;
+  const isAuto = langState.isAuto;
+  const setLang = (newLang: Language) => {
+    setLangState({ currentLang: newLang, isAuto: false });
+    try {
+      localStorage.setItem('linear_system_user_chosen_lang_v3', newLang);
+      localStorage.removeItem('app_lang');
+    } catch {}
+    const url = new URL(window.location.href);
+    url.searchParams.set('lang', newLang);
+    window.history.pushState({}, '', url.toString());
+  };
 
   const t = translations[lang];
   const isZh = lang === 'zh';

@@ -1,4 +1,5 @@
 export type Language = 'en' | 'es' | 'fr' | 'pt' | 'zh';
+export type SupportedLang = Language;
 
 export interface Translations {
   appTitle: string;
@@ -402,3 +403,75 @@ const enData = {
     switchLangPrompt: '切换语言',
   },
 };
+
+export const translations: Record<Language, Translations> = {
+  en: (enData as any).en as Translations,
+  es: ((enData as any).es || (enData as any).en) as Translations,
+  fr: ((enData as any).fr || (enData as any).en) as Translations,
+  pt: ((enData as any).pt || (enData as any).en) as Translations,
+  zh: (enData as any).zh as Translations,
+};
+
+export interface BrowserDetectionResult {
+  detected: SupportedLang;
+  rawLocale: string;
+  source: 'browser' | 'default';
+}
+
+export function getBrowserLanguageInfo(): BrowserDetectionResult {
+  if (typeof window === 'undefined') {
+    return { detected: 'en', rawLocale: 'en', source: 'default' };
+  }
+  const rawList: string[] = [];
+  if (Array.isArray(navigator.languages) && navigator.languages.length > 0) {
+    rawList.push(...navigator.languages);
+  }
+  if (navigator.language) {
+    rawList.push(navigator.language);
+  }
+  const primaryRaw = rawList[0] || 'en';
+  for (const raw of rawList) {
+    const l = raw.toLowerCase().trim();
+    if (l.startsWith('zh')) return { detected: 'zh', rawLocale: primaryRaw, source: 'browser' };
+    if (l.startsWith('es')) return { detected: 'es', rawLocale: primaryRaw, source: 'browser' };
+    if (l.startsWith('fr')) return { detected: 'fr', rawLocale: primaryRaw, source: 'browser' };
+    if (l.startsWith('pt')) return { detected: 'pt', rawLocale: primaryRaw, source: 'browser' };
+    if (l.startsWith('en')) return { detected: 'en', rawLocale: primaryRaw, source: 'browser' };
+  }
+  return { detected: 'en', rawLocale: primaryRaw, source: 'default' };
+}
+
+export function resolveInitialLanguage(): {
+  lang: SupportedLang;
+  isAuto: boolean;
+  detectedLang: SupportedLang;
+  rawLocale: string;
+} {
+  const browserInfo = getBrowserLanguageInfo();
+  if (typeof window === 'undefined') {
+    return { lang: 'en', isAuto: true, detectedLang: 'en', rawLocale: 'en' };
+  }
+  try {
+    localStorage.removeItem('linear_system_lang');
+    localStorage.removeItem('linear_system_pref_lang');
+    localStorage.removeItem('linear_system_manual_lang');
+  } catch {}
+
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const pLang = params.get('lang') as SupportedLang;
+    if (pLang && ['en', 'es', 'fr', 'pt', 'zh'].includes(pLang)) {
+      return { lang: pLang, isAuto: false, detectedLang: browserInfo.detected, rawLocale: browserInfo.rawLocale };
+    }
+  } catch {}
+
+  try {
+    const manual = localStorage.getItem('linear_system_user_chosen_lang_v3') as SupportedLang;
+    if (manual && ['en', 'es', 'fr', 'pt', 'zh'].includes(manual)) {
+      return { lang: manual, isAuto: false, detectedLang: browserInfo.detected, rawLocale: browserInfo.rawLocale };
+    }
+  } catch {}
+
+  // Strict default is English ('en') for Google SEO & global accessibility
+  return { lang: 'en', isAuto: true, detectedLang: browserInfo.detected, rawLocale: browserInfo.rawLocale };
+}
