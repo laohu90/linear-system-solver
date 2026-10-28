@@ -14,41 +14,54 @@ function preRenderStaticPagesPlugin(): Plugin {
 
       const baseHtml = fs.readFileSync(indexPath, 'utf-8');
 
-      // 1. /practice static page
-      const practiceDir = path.resolve(distDir, 'practice');
-      fs.mkdirSync(practiceDir, { recursive: true });
-      const practiceHtml = baseHtml
-        .replace(
-          /<title>.*?<\/title>/,
-          '<title>Linear System Elimination Practice Workshop – Interactive Quiz & Strategy | 消元自测演练场</title>'
-        )
-        .replace(
-          /<meta\s+name="description"\s+content=".*?"\s*\/>/,
-          '<meta name="description" content="Interactive practice workshop for secondary algebra: master substitution and elimination method selection with real-time feedback and hints. 初一代数消元思维互动自测。" />'
-        )
-        .replace(
-          /<link\s+rel="canonical"\s+href=".*?"\s*\/>/,
-          '<link rel="canonical" href="https://linear-system-solver.formulacalckit.com/practice" />'
-        );
-      fs.writeFileSync(path.resolve(practiceDir, 'index.html'), practiceHtml, 'utf-8');
+      // Helper to generate static route html
+      const emitStaticRoute = (subDir: string, title: string, desc: string, canonical: string) => {
+        const targetDir = path.resolve(distDir, subDir);
+        fs.mkdirSync(targetDir, { recursive: true });
+        const html = baseHtml
+          .replace(/<title>.*?<\/title>/, `<title>${title}</title>`)
+          .replace(
+            /<meta\s+name="description"\s+content=".*?"\s*\/>/,
+            `<meta name="description" content="${desc}" />`
+          )
+          .replace(
+            /<link\s+rel="canonical"\s+href=".*?"\s*\/>/,
+            `<link rel="canonical" href="${canonical}" />`
+          );
+        fs.writeFileSync(path.resolve(targetDir, 'index.html'), html, 'utf-8');
+      };
 
-      // 2. /guide static page
-      const guideDir = path.resolve(distDir, 'guide');
-      fs.mkdirSync(guideDir, { recursive: true });
-      const guideHtml = baseHtml
-        .replace(
-          /<title>.*?<\/title>/,
-          '<title>Linear Systems & Elimination Guide – Methods, Geometry, Determinants & Pitfalls | 核心考点指南</title>'
-        )
-        .replace(
-          /<meta\s+name="description"\s+content=".*?"\s*\/>/,
-          '<meta name="description" content="Comprehensive curriculum guide covering substitution vs elimination criteria, algebraic pitfalls, coordinate geometry, and Cramer’s rule. 一次方程组与消元法核心考点指南。" />'
-        )
-        .replace(
-          /<link\s+rel="canonical"\s+href=".*?"\s*\/>/,
-          '<link rel="canonical" href="https://linear-system-solver.formulacalckit.com/guide" />'
-        );
-      fs.writeFileSync(path.resolve(guideDir, 'index.html'), guideHtml, 'utf-8');
+      // 1. /practice
+      emitStaticRoute(
+        'practice',
+        'Linear System Elimination Practice Workshop – Interactive Quiz & Strategy | 消元自测演练场',
+        'Interactive practice workshop for secondary algebra: master substitution and elimination method selection with real-time feedback and hints. 初一代数消元思维互动自测。',
+        'https://linear-system-solver.formulacalckit.com/practice'
+      );
+
+      // 2. /problem-bank
+      emitStaticRoute(
+        'problem-bank',
+        'Linear System Problem Bank – Curated Secondary Algebra & Word Problems | 经典题库精选',
+        'Curated linear system problem sets, algebra foundations, parentheses & fractions transformations, and classic applied word problems with step-by-step solutions.',
+        'https://linear-system-solver.formulacalckit.com/problem-bank'
+      );
+
+      // 3. /guide
+      emitStaticRoute(
+        'guide',
+        'Linear Systems & Elimination Guide – Methods, Geometry, Determinants & Pitfalls | 核心考点指南',
+        'Comprehensive curriculum guide covering substitution vs elimination criteria, algebraic pitfalls, coordinate geometry, and Cramer’s rule. 一次方程组与消元法核心考点指南。',
+        'https://linear-system-solver.formulacalckit.com/guide'
+      );
+
+      // 4. /privacy
+      emitStaticRoute(
+        'privacy',
+        'Privacy Policy & Data Security – Linear System Solver | 隐私政策与数据安全说明',
+        '100% In-browser local mathematical computation. Zero third-party tracking, zero external data transmission, fully compliant with student privacy.',
+        'https://linear-system-solver.formulacalckit.com/privacy'
+      );
     },
   };
 }

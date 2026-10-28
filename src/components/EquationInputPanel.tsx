@@ -45,7 +45,7 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
 
   const [mode, setMode] = useState<'standard' | 'freeform'>('standard');
 
-  // Local state for standard inputs: 2D array of string coefficients [row][col] and [row] for c
+  // Local state for standard inputs
   const [coeffStrings, setCoeffStrings] = useState<string[][]>(() =>
     equations.map((eq) => eq.coeffs.map((c) => c.toString()))
   );
@@ -53,7 +53,7 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
     equations.map((eq) => eq.c.toString())
   );
 
-  // Local state for freeform inputs: array of strings
+  // Local state for freeform inputs
   const [freeStrings, setFreeStrings] = useState<string[]>(() =>
     equations.map((eq) => eq.rawStr || formatSyntheticEquation(eq.coeffs, eq.c, varNames))
   );
@@ -97,11 +97,8 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
         }
 
         if (allZero) {
-          setInputError(
-            isZh
-              ? `方程 ${i + 1} 的所有未知数系数不能同时为 0`
-              : `All coefficients in Equation ${i + 1} cannot be zero.`
-          );
+          // Localized error message (Task 2)
+          setInputError(t.errorCoeffsAllZero.replace('{n}', String(i + 1)));
           return;
         }
 
@@ -115,7 +112,7 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
       setInputError(null);
       onUpdate(parsedEquations, varNames);
     } catch (e: any) {
-      setInputError(e.message || 'Invalid number format: enter integers, decimals, or fractions like 2/3');
+      setInputError(e?.message || t.errorInvalidNumberInput);
     }
   };
 
@@ -136,7 +133,7 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
       setInputError(null);
       onUpdate(parsedEquations, varNames);
     } catch (e: any) {
-      setInputError(e.message || 'Parsing failed: please check equals sign and variable symbols');
+      setInputError(e?.message || t.errorParsingGeneric);
     }
   };
 
@@ -163,8 +160,15 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
         { coeffs: [new Fraction(1n), new Fraction(-1n), new Fraction(2n)], c: new Fraction(5n), rawStr: 'x - y + 2z = 5' },
       ];
       onUpdate(defaultEqs, ['x', 'y', 'z']);
+    } else if (n === 4) {
+      const defaultEqs: EquationGeneral[] = [
+        { coeffs: [new Fraction(1n), new Fraction(1n), new Fraction(1n), new Fraction(1n)], c: new Fraction(10n), rawStr: 'x + y + z + w = 10' },
+        { coeffs: [new Fraction(2n), new Fraction(-1n), new Fraction(1n), new Fraction(3n)], c: new Fraction(14n), rawStr: '2x - y + z + 3w = 14' },
+        { coeffs: [new Fraction(1n), new Fraction(2n), new Fraction(-1n), new Fraction(1n)], c: new Fraction(6n), rawStr: 'x + 2y - z + w = 6' },
+        { coeffs: [new Fraction(3n), new Fraction(1n), new Fraction(2n), new Fraction(-1n)], c: new Fraction(11n), rawStr: '3x + y + 2z - w = 11' },
+      ];
+      onUpdate(defaultEqs, ['x', 'y', 'z', 'w']);
     } else {
-      // Identity matrix with constants
       const defaultEqs: EquationGeneral[] = Array.from({ length: n }, (_, i) => ({
         coeffs: Array.from({ length: n }, (_, j) => new Fraction(i === j ? 1n : 0n)),
         c: new Fraction(BigInt(i + 1)),
@@ -174,7 +178,6 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
   };
 
   const handleGenerateRandom = () => {
-    // Generate clean integer solutions x_i in [-4, 4]
     const targetSol = Array.from({ length: n }, () => Math.floor(Math.random() * 7) - 3);
     const coeffsPool = [-3, -2, -1, 1, 2, 3, 4];
 
@@ -184,7 +187,6 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
       let rowConst = 0;
 
       for (let j = 0; j < n; j++) {
-        // Bias diagonal elements to be non-zero
         let cVal = coeffsPool[Math.floor(Math.random() * coeffsPool.length)];
         if (i === j && cVal === 0) cVal = 1;
         rowCoeffs.push(new Fraction(BigInt(cVal)));
@@ -201,13 +203,15 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
   };
 
   const circleLabels = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧'];
-  const rowColors = [
-    'text-blue-700 bg-blue-600',
-    'text-amber-700 bg-amber-600',
-    'text-emerald-700 bg-emerald-600',
-    'text-purple-700 bg-purple-600',
-    'text-rose-700 bg-rose-600',
-    'text-cyan-700 bg-cyan-600',
+
+  // Column styling per variable for clear visual mapping (Task 1)
+  const varColorBadges = [
+    { bg: 'bg-blue-50 text-blue-700 border-blue-200', dot: 'bg-blue-600', border: 'border-blue-400' },
+    { bg: 'bg-amber-50 text-amber-700 border-amber-200', dot: 'bg-amber-600', border: 'border-amber-400' },
+    { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: 'bg-emerald-600', border: 'border-emerald-400' },
+    { bg: 'bg-purple-50 text-purple-700 border-purple-200', dot: 'bg-purple-600', border: 'border-purple-400' },
+    { bg: 'bg-cyan-50 text-cyan-700 border-cyan-200', dot: 'bg-cyan-600', border: 'border-cyan-400' },
+    { bg: 'bg-rose-50 text-rose-700 border-rose-200', dot: 'bg-rose-600', border: 'border-rose-400' },
   ];
 
   return (
@@ -218,7 +222,7 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
           <div className="flex items-center gap-2">
             <h2 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
               <span>{t.inputTitle}</span>
-              <span className="text-xs px-2 py-0.5 rounded-full font-mono font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+              <span className="text-xs px-2.5 py-0.5 rounded-full font-mono font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                 {n} × {n}
               </span>
             </h2>
@@ -275,24 +279,57 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
         </div>
       </div>
 
+      {/* Task 1: Prominent Fixed Variable Column Header Bar */}
+      {mode === 'standard' && (
+        <div className="mt-4 p-2.5 bg-slate-50 border border-slate-200/90 rounded-lg flex items-center justify-between gap-2 overflow-x-auto">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[11px] font-semibold text-slate-500 mr-1 whitespace-nowrap">
+              {t.variableOrderNotice}
+            </span>
+            {varNames.map((v, i) => {
+              const badge = varColorBadges[i % varColorBadges.length];
+              return (
+                <span
+                  key={i}
+                  className={`inline-flex items-center px-2 py-0.5 rounded-md font-mono font-bold text-xs border ${badge.bg} whitespace-nowrap shadow-2xs`}
+                >
+                  <span className={`w-2 h-2 rounded-full mr-1.5 ${badge.dot}`} />
+                  <span>{v}</span>
+                </span>
+              );
+            })}
+            <span className="text-slate-400 font-bold mx-1">=</span>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md font-mono font-semibold text-xs bg-slate-200 text-slate-700 whitespace-nowrap">
+              {t.colConstHeader}
+            </span>
+          </div>
+
+          <div className="text-[11px] text-slate-400 font-mono hidden lg:inline whitespace-nowrap">
+            {varNames.map((v, i) => `a_{${i + 1}}${v}`).join(' + ')} = c
+          </div>
+        </div>
+      )}
+
       {/* Input Fields */}
-      <div className="mt-4">
+      <div className="mt-3">
         {mode === 'standard' ? (
           <div className="space-y-3">
             {equations.map((eq, rowIdx) => {
-              const labelColor = rowColors[rowIdx % rowColors.length].split(' ')[0];
-              const dotBg = rowColors[rowIdx % rowColors.length].split(' ')[1];
-
               return (
                 <div
                   key={rowIdx}
-                  className="p-3 bg-slate-50/80 border border-slate-200/80 rounded-lg transition-colors hover:border-slate-300"
+                  className="p-3 bg-white border border-slate-200 rounded-lg transition-colors hover:border-slate-300 shadow-2xs"
                 >
+                  {/* Row Header */}
                   <div className="flex items-center justify-between mb-2">
-                    <span className={`text-xs font-semibold ${labelColor} flex items-center gap-1.5`}>
-                      <span className={`w-2 h-2 rounded-full ${dotBg}`} />
+                    <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                      <span className="w-5 h-5 rounded-md bg-slate-900 text-white text-[11px] font-bold flex items-center justify-center font-mono">
+                        {circleLabels[rowIdx] || rowIdx + 1}
+                      </span>
                       <span>
-                        {isZh ? `方程 ${circleLabels[rowIdx] || rowIdx + 1}` : `Equation ${circleLabels[rowIdx] || rowIdx + 1}`}
+                        {isZh
+                          ? `方程 ${circleLabels[rowIdx] || rowIdx + 1}`
+                          : `Equation ${circleLabels[rowIdx] || rowIdx + 1}`}
                       </span>
                     </span>
                     <span className="text-[11px] text-slate-400 font-mono">
@@ -300,43 +337,59 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
                     </span>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-800">
-                    {varNames.map((vName, colIdx) => (
-                      <React.Fragment key={colIdx}>
-                        {colIdx > 0 && <span className="text-slate-400 font-bold">+</span>}
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="text"
-                            value={coeffStrings[rowIdx]?.[colIdx] ?? '0'}
-                            onChange={(e) => {
-                              const next = coeffStrings.map((r) => [...r]);
-                              if (!next[rowIdx]) next[rowIdx] = [];
-                              next[rowIdx][colIdx] = e.target.value;
-                              setCoeffStrings(next);
-                              commitStandard(next, constStrings);
-                            }}
-                            placeholder="1"
-                            className="w-14 sm:w-16 px-2 py-1.5 text-center font-mono font-medium bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
-                          />
-                          <span className="font-semibold text-slate-700">{vName}</span>
-                        </div>
-                      </React.Fragment>
-                    ))}
+                  {/* Coefficients with Attached Variable Badges (Task 1) */}
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-800">
+                    {varNames.map((vName, colIdx) => {
+                      const badge = varColorBadges[colIdx % varColorBadges.length];
+
+                      return (
+                        <React.Fragment key={colIdx}>
+                          {colIdx > 0 && <span className="text-slate-400 font-bold">+</span>}
+                          <div className="flex items-center bg-slate-50 border border-slate-300 rounded-md focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 focus-within:bg-white overflow-hidden shadow-2xs">
+                            <input
+                              type="text"
+                              value={coeffStrings[rowIdx]?.[colIdx] ?? '0'}
+                              onChange={(e) => {
+                                const next = coeffStrings.map((r) => [...r]);
+                                if (!next[rowIdx]) next[rowIdx] = [];
+                                next[rowIdx][colIdx] = e.target.value;
+                                setCoeffStrings(next);
+                                commitStandard(next, constStrings);
+                              }}
+                              placeholder="1"
+                              className="w-12 sm:w-16 px-2 py-1.5 text-center font-mono font-medium focus:outline-none text-xs sm:text-sm bg-transparent"
+                            />
+                            {/* Explicit Variable Badge inside input group (Task 1) */}
+                            <span
+                              className={`px-2 py-1.5 text-xs font-bold font-mono border-l border-slate-200 select-none ${badge.bg}`}
+                            >
+                              {vName}
+                            </span>
+                          </div>
+                        </React.Fragment>
+                      );
+                    })}
 
                     <span className="text-slate-400 font-bold mx-0.5">=</span>
 
-                    <input
-                      type="text"
-                      value={constStrings[rowIdx] ?? '0'}
-                      onChange={(e) => {
-                        const nextConsts = [...constStrings];
-                        nextConsts[rowIdx] = e.target.value;
-                        setConstStrings(nextConsts);
-                        commitStandard(coeffStrings, nextConsts);
-                      }}
-                      placeholder="0"
-                      className="w-16 sm:w-20 px-2 py-1.5 text-center font-mono font-medium bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
-                    />
+                    {/* Constant Input */}
+                    <div className="flex items-center bg-slate-50 border border-slate-300 rounded-md focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 focus-within:bg-white overflow-hidden shadow-2xs">
+                      <input
+                        type="text"
+                        value={constStrings[rowIdx] ?? '0'}
+                        onChange={(e) => {
+                          const nextConsts = [...constStrings];
+                          nextConsts[rowIdx] = e.target.value;
+                          setConstStrings(nextConsts);
+                          commitStandard(coeffStrings, nextConsts);
+                        }}
+                        placeholder="0"
+                        className="w-16 sm:w-20 px-2 py-1.5 text-center font-mono font-medium focus:outline-none text-xs sm:text-sm bg-transparent"
+                      />
+                      <span className="px-2 py-1.5 text-[11px] font-mono font-medium text-slate-500 border-l border-slate-200 select-none bg-slate-100">
+                        c
+                      </span>
+                    </div>
                   </div>
                 </div>
               );
@@ -344,11 +397,16 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
           </div>
         ) : (
           <div className="space-y-3">
+            <div className="p-2.5 bg-blue-50/70 border border-blue-200/80 rounded-lg text-xs text-blue-900 flex items-center gap-2">
+              <span className="font-semibold">💡 {t.variableOrderNotice}</span>
+              <span className="font-mono font-bold tracking-wider">{varNames.join(', ')}</span>
+            </div>
+
             {freeStrings.map((str, idx) => (
               <div key={idx}>
                 <label className="block text-xs font-medium text-slate-700 mb-1">
                   {isZh
-                    ? `方程 ${circleLabels[idx] || idx + 1} 表达式（支持带括号与分式，未知数限：${varNames.join(', ')}）：`
+                    ? `方程 ${circleLabels[idx] || idx + 1} 表达式（未知数限：${varNames.join(', ')}）：`
                     : `Equation ${circleLabels[idx] || idx + 1} Expression (Allowed variables: ${varNames.join(', ')}):`}
                 </label>
                 <input

@@ -157,6 +157,36 @@ export interface Translations {
   rankAug: string;
   variablesCount: string;
   augmentedMatrix: string;
+
+  // Columns & Errors i18n
+  colVarHeader: string;
+  colConstHeader: string;
+  variableOrderNotice: string;
+  errorCoeffsAllZero: string;
+  errorInvalidNumberInput: string;
+  errorParsingGeneric: string;
+
+  // Problem Bank Page (/problem-bank)
+  navProblemBank: string;
+  problemBankHeading: string;
+  problemBankSub: string;
+  searchProblems: string;
+  loadProblem: string;
+  loadedToSolver: string;
+  filterAll: string;
+
+  // Privacy Policy Page (/privacy)
+  navPrivacy: string;
+  privacyHeading: string;
+  privacySub: string;
+  privacyP1Title: string;
+  privacyP1Text: string;
+  privacyP2Title: string;
+  privacyP2Text: string;
+  privacyP3Title: string;
+  privacyP3Text: string;
+  privacyP4Title: string;
+  privacyP4Text: string;
 }
 
 const enData = {
@@ -309,6 +339,36 @@ const enData = {
     rankAug: 'Rank of Augmented Matrix rank([A|b])',
     variablesCount: 'Number of Variables (n)',
     augmentedMatrix: 'Augmented Matrix [A | b]',
+
+    // Columns & Errors i18n
+    colVarHeader: 'Column',
+    colConstHeader: 'Constant c',
+    variableOrderNotice: 'Variable column order: ',
+    errorCoeffsAllZero: 'All coefficients in Equation {n} cannot be zero.',
+    errorInvalidNumberInput: 'Invalid number format: please enter integers, decimals, or fractions like 2/3',
+    errorParsingGeneric: 'Equation parsing failed: please check equals sign and variable symbols',
+
+    // Problem Bank Page (/problem-bank)
+    navProblemBank: 'Problem Bank',
+    problemBankHeading: 'Linear Systems Problem Repository',
+    problemBankSub: 'Curated algebra problems, brackets & fraction simplifications, and classic word applications',
+    searchProblems: 'Search problems by title, keywords or equations...',
+    loadProblem: 'Load to Solver',
+    loadedToSolver: 'Successfully loaded to Solver!',
+    filterAll: 'All Categories',
+
+    // Privacy Policy Page (/privacy)
+    navPrivacy: 'Privacy Policy',
+    privacyHeading: 'Privacy & Data Protection Policy',
+    privacySub: '100% In-browser local computation. Zero tracking, zero external transmission.',
+    privacyP1Title: '1. 100% In-Browser Local Processing',
+    privacyP1Text: 'All mathematical operations, Gaussian elimination row reductions, exact rational fraction calculations, and 2D coordinate graphs are performed strictly within your device’s web browser. No equations, numbers, or problem texts are uploaded to any cloud server.',
+    privacyP2Title: '2. No Cross-Site Tracking or Advertising Cookies',
+    privacyP2Text: 'We do not employ tracking cookies, advertising identifiers, or analytics trackers that capture personal identifiable information (PII). This tool is built to strictly respect educational data privacy standards including COPPA and FERPA.',
+    privacyP3Title: '3. Browser Local Storage',
+    privacyP3Text: 'The only data saved on your device is your preferred interface language (e.g. English or Chinese), stored safely in your browser’s localStorage. You can clear this anytime through your browser settings.',
+    privacyP4Title: '4. Non-Commercial Academic & Educational Mission',
+    privacyP4Text: 'Linear System Solver is an open educational tool created to assist secondary and university mathematics students, teachers, and self-learners in understanding linear algebra and checking homework solutions.',
   },
   zh: {
     appTitle: '二元一次方程组求解器',
@@ -458,6 +518,36 @@ const enData = {
     rankAug: '增广矩阵的秩 rank([A|b])',
     variablesCount: '未知数个数 (n)',
     augmentedMatrix: '增广矩阵 [A | b]',
+
+    // Columns & Errors i18n
+    colVarHeader: '未知数列',
+    colConstHeader: '常数项 c',
+    variableOrderNotice: '未知数列对齐顺序：',
+    errorCoeffsAllZero: '方程 {n} 的所有未知数系数不能同时为 0。',
+    errorInvalidNumberInput: '数字格式无效：请输入整数、小数或如 2/3 的分数',
+    errorParsingGeneric: '方程整式解析失败：请检查等号及未知数变量符号',
+
+    // Problem Bank Page (/problem-bank)
+    navProblemBank: '经典题库',
+    problemBankHeading: '一次方程组与多元方程题库精选',
+    problemBankSub: '涵盖初中中考真题、典型易错去括号去分母变式题与现实建模实际应用题',
+    searchProblems: '搜索题目名称、关键词或方程...',
+    loadProblem: '载入到求解器',
+    loadedToSolver: '已成功载入求解器！',
+    filterAll: '全部类别',
+
+    // Privacy Policy Page (/privacy)
+    navPrivacy: '隐私政策',
+    privacyHeading: '隐私与数据安全说明',
+    privacySub: '100% 浏览器本地离线高精度计算，严格保护师生教育隐私',
+    privacyP1Title: '1. 纯本地前端运算（零服务器留存）',
+    privacyP1Text: '本求解器所有方程解析、高斯消元初等行变换、有理数分数精确运算与几何图象生成均在您的终端设备（浏览器）本地实时完成，不向任何远程服务器或第三方上传您输入的方程数据。',
+    privacyP2Title: '2. 无第三方追踪与广告 Cookie',
+    privacyP2Text: '我们不使用任何跨站跟踪 Cookie，不收集学生的个人身份信息（PII），完全符合青少年与学校教育隐私保护规范（COPPA / FERPA）。',
+    privacyP3Title: '3. 本地存储配置说明',
+    privacyP3Text: '仅在您的浏览器 localStorage 中保存语言偏好设置（如中英文切换），您可随时通过清理浏览器缓存彻底清除。',
+    privacyP4Title: '4. 学术教育公益宗旨',
+    privacyP4Text: '二元及多元一次方程组求解器专为初高中数学教学、大学线性代数启蒙及数学作业辅助自查设计，倡导清晰、严谨、规范的数学书写习惯。',
   },
 };
 

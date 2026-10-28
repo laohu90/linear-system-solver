@@ -7,6 +7,7 @@ import {
   Languages,
   BookOpen,
   Layers,
+  ShieldCheck,
 } from 'lucide-react';
 import {
   EquationGeneral,
@@ -21,9 +22,11 @@ import { CoordinateGraph } from './components/CoordinateGraph';
 import { EliminationQuizPractice } from './components/EliminationQuizPractice';
 import { ClassicProblemsModal } from './components/ClassicProblemsModal';
 import { HomeworkExportModal } from './components/HomeworkExportModal';
+import { ProblemBankView } from './components/ProblemBankView';
+import { PrivacyView } from './components/PrivacyView';
 import { Language, SupportedLang, translations, resolveInitialLanguage } from './i18n/translations';
 
-type AppRoute = 'solver' | 'practice' | 'knowledge';
+export type AppRoute = 'solver' | 'practice' | 'knowledge' | 'problem-bank' | 'privacy';
 
 export default function App() {
   // Language state
@@ -35,12 +38,14 @@ export default function App() {
   const isZh = lang === 'zh';
   const t = translations[lang];
 
-  // Routing state based on window.location.pathname (POINT 6)
+  // Routing state based on window.location.pathname (POINT 6 & Task 3)
   const getInitialRoute = (): AppRoute => {
     if (typeof window === 'undefined') return 'solver';
     const path = window.location.pathname.toLowerCase();
     if (path === '/practice' || path.startsWith('/practice/')) return 'practice';
     if (path === '/guide' || path === '/knowledge' || path.startsWith('/guide/')) return 'knowledge';
+    if (path === '/problem-bank' || path.startsWith('/problem-bank/')) return 'problem-bank';
+    if (path === '/privacy' || path.startsWith('/privacy/')) return 'privacy';
     return 'solver';
   };
 
@@ -51,9 +56,12 @@ export default function App() {
     let targetPath = '/';
     if (route === 'practice') targetPath = '/practice';
     else if (route === 'knowledge') targetPath = '/guide';
+    else if (route === 'problem-bank') targetPath = '/problem-bank';
+    else if (route === 'privacy') targetPath = '/privacy';
 
     const currentParams = window.location.search;
     window.history.pushState({ route }, '', `${targetPath}${currentParams}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   // Handle browser back/forward buttons
@@ -62,6 +70,8 @@ export default function App() {
       const path = window.location.pathname.toLowerCase();
       if (path === '/practice' || path.startsWith('/practice/')) setActiveNav('practice');
       else if (path === '/guide' || path === '/knowledge' || path.startsWith('/guide/')) setActiveNav('knowledge');
+      else if (path === '/problem-bank' || path.startsWith('/problem-bank/')) setActiveNav('problem-bank');
+      else if (path === '/privacy' || path.startsWith('/privacy/')) setActiveNav('privacy');
       else setActiveNav('solver');
     };
 
@@ -69,7 +79,7 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Update SEO Meta Tags per Route & Language (POINT 6 & applet-seo skill)
+  // Update SEO Meta Tags per Route & Language (applet-seo skill & Task 3)
   useEffect(() => {
     document.documentElement.lang = isZh ? 'zh-CN' : 'en';
 
@@ -93,6 +103,22 @@ export default function App() {
         ? '初一代数消元思维互动自测：自主选择优先消去的未知数与消元方法，计算检验解的正确性，并附名师提示。'
         : 'Interactive practice workshop for secondary algebra: master substitution and elimination method selection with real-time feedback and hints.';
       canonicalUrl = 'https://linear-system-solver.formulacalckit.com/practice';
+    } else if (activeNav === 'problem-bank') {
+      pageTitle = isZh
+        ? '二元及多元一次方程组经典题库 - 中考常考与实际应用题精选 | Problem Bank'
+        : 'Linear System Problem Bank – Curated Secondary Algebra & Word Problems';
+      pageDesc = isZh
+        ? '精选中考常考二元一次方程组、去括号去分母变式题、实际生活应用题（鸡兔同笼、行程流水、工程配套），支持一键载入分步求解与演练。'
+        : 'Browse standard secondary algebra linear system problem sets, applied word problems, fractions, and parentheses with instant step-by-step solver loading.';
+      canonicalUrl = 'https://linear-system-solver.formulacalckit.com/problem-bank';
+    } else if (activeNav === 'privacy') {
+      pageTitle = isZh
+        ? '隐私政策与数据安全说明 | 二元一次方程组求解器'
+        : 'Privacy Policy & Data Security – Linear System Solver';
+      pageDesc = isZh
+        ? '100% 浏览器本地离线高精度计算，无跨站追踪 Cookie，严格保护每位师生的教育与作业数据隐私。'
+        : '100% In-browser local mathematical computation. Zero third-party tracking, zero external data transmission, fully compliant with student privacy.';
+      canonicalUrl = 'https://linear-system-solver.formulacalckit.com/privacy';
     } else {
       pageTitle = isZh
         ? '一次方程组与消元法核心考点指南 - 初中代数与线性代数易错总结'
@@ -105,7 +131,6 @@ export default function App() {
 
     document.title = pageTitle;
 
-    // Helper to update or create meta tags
     const setMeta = (nameAttr: string, valAttr: string, content: string) => {
       let meta = document.querySelector(`meta[${nameAttr}="${valAttr}"]`);
       if (!meta) {
@@ -123,7 +148,6 @@ export default function App() {
     setMeta('name', 'twitter:title', pageTitle);
     setMeta('name', 'twitter:description', pageDesc);
 
-    // Canonical link
     let canonical = document.querySelector('link[rel="canonical"]');
     if (!canonical) {
       canonical = document.createElement('link');
@@ -144,7 +168,7 @@ export default function App() {
     } catch {}
   };
 
-  // n×n System State (POINT 1)
+  // n×n System State
   const [varNames, setVarNames] = useState<string[]>(['x', 'y']);
   const [equations, setEquations] = useState<EquationGeneral[]>([
     {
@@ -159,35 +183,30 @@ export default function App() {
     },
   ]);
 
-  // Current problem title if loaded from preset
   const [customProblemTitle, setCustomProblemTitle] = useState<string | null>(null);
-
-  // Active solution method
   const [activeMethod, setActiveMethod] = useState<'substitution' | 'elimination' | 'gaussian'>('elimination');
 
   // Modals
   const [isPresetsOpen, setIsPresetsOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
 
-  // Compute full analytical solution with current language and n×n Gaussian solver
+  // Compute full analytical solution
   const analysis: SystemAnalysis = useMemo(() => {
     return solveGeneralLinearSystem(equations, varNames, lang);
   }, [equations, varNames, lang]);
 
-  // Add Equation Handler (POINT 1)
+  // Add Equation Handler
   const handleAddEquation = () => {
     const currentDim = equations.length;
     if (currentDim >= 6) return;
     const nextDim = currentDim + 1;
     const nextVarNames = getDefaultVarNames(nextDim);
 
-    // Expand existing equations with 0 for the new column
     const nextEqs: EquationGeneral[] = equations.map((eq) => ({
       coeffs: [...eq.coeffs, new Fraction(0n)],
       c: eq.c,
     }));
 
-    // Add a new row: standard unit row or default coefficients
     const newRowCoeffs = Array.from({ length: nextDim }, (_, i) =>
       new Fraction(i === currentDim ? 1n : 1n)
     );
@@ -202,7 +221,7 @@ export default function App() {
     setActiveMethod('gaussian');
   };
 
-  // Remove Equation Handler (POINT 1)
+  // Remove Equation Handler
   const handleRemoveEquation = () => {
     const currentDim = equations.length;
     if (currentDim <= 2) return;
@@ -224,7 +243,6 @@ export default function App() {
     }
   };
 
-  // Update Equations from Input Panel
   const handleUpdateEquations = (newEqs: EquationGeneral[], newVars: string[]) => {
     setEquations(newEqs);
     setVarNames(newVars);
@@ -238,6 +256,7 @@ export default function App() {
       { coeffs: [eq2.a, eq2.b], c: eq2.c, rawStr: eq2.rawStr },
     ]);
     if (title) setCustomProblemTitle(title);
+    setIsPresetsOpen(false);
     navigateTo('solver');
   };
 
@@ -263,7 +282,7 @@ export default function App() {
             <span>{t.appTitle}</span>
           </a>
 
-          {/* Desktop Navigation Links (POINT 6) */}
+          {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-sm font-medium text-slate-600">
             <a
               href="/"
@@ -289,12 +308,18 @@ export default function App() {
             >
               {t.navPractice}
             </a>
-            <button
-              onClick={() => setIsPresetsOpen(true)}
-              className="hover:text-slate-900 transition-colors whitespace-nowrap shrink-0"
+            <a
+              href="/problem-bank"
+              onClick={(e) => {
+                e.preventDefault();
+                navigateTo('problem-bank');
+              }}
+              className={`hover:text-slate-900 transition-colors whitespace-nowrap shrink-0 ${
+                activeNav === 'problem-bank' ? 'text-blue-600 font-semibold' : ''
+              }`}
             >
-              {t.navPresets}
-            </button>
+              {t.navProblemBank}
+            </a>
             <a
               href="/guide"
               onClick={(e) => {
@@ -352,10 +377,10 @@ export default function App() {
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
         {/* Mobile Navigation Sub-bar */}
-        <div className="flex md:hidden items-center justify-around bg-white border border-slate-200 rounded-lg p-1 mb-5 text-xs font-medium">
+        <div className="flex md:hidden items-center justify-around bg-white border border-slate-200 rounded-lg p-1 mb-5 text-xs font-medium overflow-x-auto">
           <button
             onClick={() => navigateTo('solver')}
-            className={`px-3 py-1.5 rounded-md ${
+            className={`px-2.5 py-1.5 rounded-md whitespace-nowrap ${
               activeNav === 'solver' ? 'bg-blue-600 text-white font-semibold' : 'text-slate-600'
             }`}
           >
@@ -363,21 +388,23 @@ export default function App() {
           </button>
           <button
             onClick={() => navigateTo('practice')}
-            className={`px-3 py-1.5 rounded-md ${
+            className={`px-2.5 py-1.5 rounded-md whitespace-nowrap ${
               activeNav === 'practice' ? 'bg-blue-600 text-white font-semibold' : 'text-slate-600'
             }`}
           >
             {t.mobileNavPractice}
           </button>
           <button
-            onClick={() => setIsPresetsOpen(true)}
-            className="px-3 py-1.5 rounded-md text-slate-600"
+            onClick={() => navigateTo('problem-bank')}
+            className={`px-2.5 py-1.5 rounded-md whitespace-nowrap ${
+              activeNav === 'problem-bank' ? 'bg-blue-600 text-white font-semibold' : 'text-slate-600'
+            }`}
           >
-            {t.mobileNavPresets}
+            {t.navProblemBank}
           </button>
           <button
             onClick={() => navigateTo('knowledge')}
-            className={`px-3 py-1.5 rounded-md ${
+            className={`px-2.5 py-1.5 rounded-md whitespace-nowrap ${
               activeNav === 'knowledge' ? 'bg-blue-600 text-white font-semibold' : 'text-slate-600'
             }`}
           >
@@ -385,7 +412,7 @@ export default function App() {
           </button>
         </div>
 
-        {/* VIEW 1: Main Equation Solver & Geometric Coordinate Visualization */}
+        {/* VIEW 1: Main Equation Solver */}
         {activeNav === 'solver' && (
           <div className="space-y-6">
             {/* Top Info Strip */}
@@ -418,11 +445,10 @@ export default function App() {
               </div>
             </div>
 
-            {/* Split Layout: Left Column (Input & Visualization) / Right Column (Steps & Matrix Analysis) */}
+            {/* Split Layout: Left Column / Right Column */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               {/* Left Column (5 Cols) */}
               <div className="lg:col-span-5 space-y-6">
-                {/* 1. Equation Input Panel (With "Add Equation" button) */}
                 <EquationInputPanel
                   equations={equations}
                   varNames={varNames}
@@ -433,7 +459,7 @@ export default function App() {
                   lang={lang}
                 />
 
-                {/* 2. Interactive Coordinate Graph Stage (for 2x2) or Matrix Structure Card (for n>2) */}
+                {/* 2D Coordinate Graph (2x2) or Multi-Variable Structure Card */}
                 {equations.length === 2 ? (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs px-1">
@@ -458,14 +484,14 @@ export default function App() {
                     </div>
                     <p className="text-xs text-slate-600 leading-relaxed">
                       {isZh
-                        ? `当前系统包含 ${equations.length} 个方程与 ${equations.length} 个未知数 (${varNames.join(', ')})。在三维及更高维度空间中，方程表示几何超平面，交点通过右侧高斯消元初等行变换精确求解。`
-                        : `Current system comprises ${equations.length} equations in ${equations.length} variables (${varNames.join(', ')}). In higher dimensional Euclidean space, equations represent hyperplanes solved via row reduction.`}
+                        ? `当前系统包含 ${equations.length} 个方程与 ${equations.length} 个未知数 (${varNames.join(', ')})。在多维欧几里得空间中，方程表示几何超平面，交点通过右侧高斯消元初等行变换精确求解。`
+                        : `Current system comprises ${equations.length} equations in ${equations.length} variables (${varNames.join(', ')}). In higher dimensional space, equations represent hyperplanes solved via row reduction.`}
                     </p>
                   </div>
                 )}
               </div>
 
-              {/* Right Column (7 Cols): Matrix Analysis & Step-by-Step Walkthrough */}
+              {/* Right Column (7 Cols) */}
               <div className="lg:col-span-7 space-y-6">
                 <SolutionStepsView
                   analysis={analysis}
@@ -500,7 +526,15 @@ export default function App() {
           </div>
         )}
 
-        {/* VIEW 3: Concept & Traps Reference / SEO Educational Guide (/guide) */}
+        {/* VIEW 3: Dedicated Problem Bank Page (/problem-bank) */}
+        {activeNav === 'problem-bank' && (
+          <ProblemBankView
+            onLoadProblem={handleSelectPreset}
+            lang={lang}
+          />
+        )}
+
+        {/* VIEW 4: Concept & Traps Reference / SEO Educational Guide (/guide) */}
         {activeNav === 'knowledge' && (
           <div className="max-w-4xl mx-auto space-y-6">
             <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-xs space-y-6">
@@ -606,23 +640,15 @@ export default function App() {
                         : 'By Rouché-Capelli Theorem: if rank(A) = rank([A|b]) = n, unique solution exists (det(A) ≠ 0); if rank(A) < rank([A|b]), inconsistent (no solution); if rank(A) = rank([A|b]) < n, infinitely many solutions.'}
                     </p>
                   </div>
-
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                    <p className="font-semibold text-slate-900 mb-1">
-                      {isZh
-                        ? 'Q3: 遇到带括号或分母的复杂方程组该怎么化简？'
-                        : 'Q3: How to handle equations with parentheses and denominators?'}
-                    </p>
-                    <p>
-                      {isZh
-                        ? '先通过“去分母”（两边乘以分母的最小公倍数）和“去括号”（利用乘法分配律注意符号），再移项合并同类项，化为标准形式后求解。'
-                        : 'First clear denominators by multiplying both sides by the LCD, expand brackets carefully with the distributive law, and collect like terms.'}
-                    </p>
-                  </div>
                 </div>
               </div>
             </div>
           </div>
+        )}
+
+        {/* VIEW 5: Dedicated Privacy Policy Page (/privacy) */}
+        {activeNav === 'privacy' && (
+          <PrivacyView lang={lang} />
         )}
       </main>
 
@@ -632,13 +658,37 @@ export default function App() {
           <div>
             <span>{t.footerDesc}</span>
           </div>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setIsPresetsOpen(true)}
+          <div className="flex items-center gap-4 flex-wrap">
+            <a
+              href="/"
+              onClick={(e) => {
+                e.preventDefault();
+                navigateTo('solver');
+              }}
               className="hover:text-slate-900 transition-colors"
             >
-              {t.footerApplied}
-            </button>
+              {t.navSolver}
+            </a>
+            <a
+              href="/practice"
+              onClick={(e) => {
+                e.preventDefault();
+                navigateTo('practice');
+              }}
+              className="hover:text-slate-900 transition-colors"
+            >
+              {t.navPractice}
+            </a>
+            <a
+              href="/problem-bank"
+              onClick={(e) => {
+                e.preventDefault();
+                navigateTo('problem-bank');
+              }}
+              className="hover:text-slate-900 transition-colors font-medium text-blue-600 hover:text-blue-700"
+            >
+              {t.navProblemBank}
+            </a>
             <a
               href="/guide"
               onClick={(e) => {
@@ -648,6 +698,16 @@ export default function App() {
               className="hover:text-slate-900 transition-colors"
             >
               {t.footerKnowledge}
+            </a>
+            <a
+              href="/privacy"
+              onClick={(e) => {
+                e.preventDefault();
+                navigateTo('privacy');
+              }}
+              className="hover:text-slate-900 transition-colors"
+            >
+              {t.navPrivacy}
             </a>
             <button
               onClick={() => setIsExportOpen(true)}
