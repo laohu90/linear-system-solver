@@ -459,7 +459,7 @@ export default function App() {
                   lang={lang}
                 />
 
-                {/* 2D Coordinate Graph (2x2) or Multi-Variable Structure Card */}
+                {/* 2D Coordinate Graph (2x2) or Multi-Variable Hyperplane Explanation Card (n>2) */}
                 {equations.length === 2 ? (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs px-1">
@@ -472,21 +472,76 @@ export default function App() {
                     <CoordinateGraph analysis={analysis} lang={lang} />
                   </div>
                 ) : (
-                  <div className="p-4 bg-white border border-slate-200 rounded-xl space-y-3">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-slate-800 flex items-center gap-1.5">
-                        <Layers className="w-4 h-4 text-blue-600" />
-                        <span>{isZh ? '多元线性方程组结构概览' : 'Higher-Order System Overview'}</span>
-                      </span>
-                      <span className="font-mono text-blue-700 bg-blue-50 px-2 py-0.5 rounded text-[11px]">
+                  <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-4">
+                    {/* Header */}
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                      <div className="flex items-center gap-2">
+                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                          <Compass className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+                            {t.graph2dOnly}
+                          </h3>
+                          <span className="text-[11px] text-slate-400">
+                            {isZh ? `当前方程组为 ${equations.length} 维系统` : `Current system is ${equations.length}-dimensional`}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full font-mono font-semibold text-[11px] bg-slate-100 text-slate-700">
                         n = {equations.length}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-600 leading-relaxed">
-                      {isZh
-                        ? `当前系统包含 ${equations.length} 个方程与 ${equations.length} 个未知数 (${varNames.join(', ')})。在多维欧几里得空间中，方程表示几何超平面，交点通过右侧高斯消元初等行变换精确求解。`
-                        : `Current system comprises ${equations.length} equations in ${equations.length} variables (${varNames.join(', ')}). In higher dimensional space, equations represent hyperplanes solved via row reduction.`}
-                    </p>
+
+                    {/* Exact user requested pedagogical notice badge */}
+                    <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-lg text-xs text-amber-900 flex items-start gap-2 shadow-2xs">
+                      <span className="text-base leading-none shrink-0">💡</span>
+                      <div className="space-y-1">
+                        <p className="font-bold text-amber-950">
+                          {t.hyperplaneNotice}
+                        </p>
+                        <p className="text-[11px] text-amber-800 leading-relaxed">
+                          {t.hyperplaneDesc}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Quick Rank Status Box */}
+                    <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2 text-xs">
+                      <div className="font-semibold text-slate-800 flex items-center justify-between">
+                        <span>{isZh ? '代数几何判定依据：' : 'Algebraic Classification Basis:'}</span>
+                        <span className="font-mono text-blue-700 font-bold">
+                          {analysis.typeDescription}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                        <div className="bg-white p-2 rounded border border-slate-200">
+                          <span className="text-slate-400 block text-[10px]">rank(A)</span>
+                          <span className="text-slate-900 font-bold text-sm">{analysis.matrixAnalysis.rankA}</span>
+                        </div>
+                        <div className="bg-white p-2 rounded border border-slate-200">
+                          <span className="text-slate-400 block text-[10px]">rank([A|b])</span>
+                          <span className="text-slate-900 font-bold text-sm">{analysis.matrixAnalysis.rankAug}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Switch back to 2x2 action button */}
+                    <button
+                      onClick={() => {
+                        setVarNames(['x', 'y']);
+                        setEquations([
+                          { coeffs: [new Fraction(2n), new Fraction(3n)], c: new Fraction(7n), rawStr: '2x + 3y = 7' },
+                          { coeffs: [new Fraction(3n), new Fraction(-2n)], c: new Fraction(4n), rawStr: '3x - 2y = 4' },
+                        ]);
+                        setCustomProblemTitle(null);
+                        setActiveMethod('elimination');
+                      }}
+                      className="w-full py-2 px-3 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-2xs"
+                    >
+                      <Compass className="w-3.5 h-3.5" />
+                      <span>{t.btnSwitchTo2d}</span>
+                    </button>
                   </div>
                 )}
               </div>

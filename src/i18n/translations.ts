@@ -43,6 +43,10 @@ export interface Translations {
   zoomIn: string;
   zoomOut: string;
   resetView: string;
+  hyperplaneNotice: string;
+  graph2dOnly: string;
+  hyperplaneDesc: string;
+  btnSwitchTo2d: string;
 
   // Steps View
   methodSub: string;
@@ -231,6 +235,10 @@ const enData = {
     zoomIn: 'Zoom In',
     zoomOut: 'Zoom Out',
     resetView: 'Center View',
+    hyperplaneNotice: 'For n > 2, systems represent hyperplane intersections; use matrix rank analysis instead.',
+    graph2dOnly: '2D Cartesian Coordinate Graph (2×2 Only)',
+    hyperplaneDesc: 'When n > 2, equations geometrically represent hyperplanes in higher-dimensional space. Since multi-hyperplane intersections cannot be plotted in a 2D Cartesian plane, linear algebra utilizes matrix rank rank(A) and augmented rank rank([A|b]) for exact classification.',
+    btnSwitchTo2d: 'Switch to 2×2 for 2D Graph',
 
     methodSub: 'Substitution Method',
     methodElim: 'Elimination Method',
@@ -410,6 +418,10 @@ const enData = {
     zoomIn: '放大网格',
     zoomOut: '缩小网格',
     resetView: '居中焦点',
+    hyperplaneNotice: 'n>2 时以超平面交集表示，改用矩阵秩判定',
+    graph2dOnly: '平面直角坐标系（仅 2 维空间支持函数画图）',
+    hyperplaneDesc: '方程未知数个数 n > 2 时，几何意义扩展为三维空间平面或更高维度的超平面。空间中多个超平面的相交情况无法投影至单一二维直角坐标系绘制，在线性代数中改用矩阵的秩 rank(A) 与增广矩阵秩 rank([A|b]) 以及克莱姆法则进行代数判定。',
+    btnSwitchTo2d: '切换回二元 (2×2) 查看二维图像',
 
     methodSub: '代入消元法',
     methodElim: '加减消元法',
