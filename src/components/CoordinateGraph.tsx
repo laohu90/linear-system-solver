@@ -177,39 +177,41 @@ export const CoordinateGraph: React.FC<CoordinateGraphProps> = ({ analysis, lang
       ctx.restore();
     };
 
-    // Draw Line 1 (Blue #2563eb)
-    drawLine(
-      analysis.line1.slope,
-      analysis.line1.intercept,
-      analysis.line1.isVertical,
-      analysis.line1.xIntercept,
-      '#2563eb',
-      2.5
-    );
-
-    // Draw Line 2 (Amber/Orange #ea580c)
-    if (analysis.type === 'infinite') {
-      // Coincident line - dashed overlay
-      ctx.save();
-      ctx.setLineDash([6, 6]);
+    if (analysis.line1 && analysis.line2) {
+      // Draw Line 1 (Blue #2563eb)
       drawLine(
-        analysis.line2.slope,
-        analysis.line2.intercept,
-        analysis.line2.isVertical,
-        analysis.line2.xIntercept,
-        '#ea580c',
-        3
-      );
-      ctx.restore();
-    } else {
-      drawLine(
-        analysis.line2.slope,
-        analysis.line2.intercept,
-        analysis.line2.isVertical,
-        analysis.line2.xIntercept,
-        '#ea580c',
+        analysis.line1.slope,
+        analysis.line1.intercept,
+        analysis.line1.isVertical,
+        analysis.line1.xIntercept,
+        '#2563eb',
         2.5
       );
+
+      // Draw Line 2 (Amber/Orange #ea580c)
+      if (analysis.type === 'infinite') {
+        // Coincident line - dashed overlay
+        ctx.save();
+        ctx.setLineDash([6, 6]);
+        drawLine(
+          analysis.line2.slope,
+          analysis.line2.intercept,
+          analysis.line2.isVertical,
+          analysis.line2.xIntercept,
+          '#ea580c',
+          3
+        );
+        ctx.restore();
+      } else {
+        drawLine(
+          analysis.line2.slope,
+          analysis.line2.intercept,
+          analysis.line2.isVertical,
+          analysis.line2.xIntercept,
+          '#ea580c',
+          2.5
+        );
+      }
     }
 
     // 3. Draw Intersection Point if unique

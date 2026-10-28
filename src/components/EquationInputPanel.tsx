@@ -1,367 +1,396 @@
-import React, { useState } from 'react';
-import { Sparkles, ArrowUpDown, RotateCcw, BookOpen, AlertCircle, Edit3, Grid } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  Sparkles,
+  ArrowUpDown,
+  RotateCcw,
+  BookOpen,
+  AlertCircle,
+  Edit3,
+  Grid,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { MathView } from './MathView';
-import { EquationStandard, parseLinearEquation, formatSystemTeX } from '../utils/equation';
+import {
+  EquationGeneral,
+  parseLinearEquation,
+  formatGeneralSystemTeX,
+  getDefaultVarNames,
+} from '../utils/equation';
 import { Fraction } from '../utils/fraction';
 import { Language, translations } from '../i18n/translations';
 
 interface EquationInputPanelProps {
-  eq1: EquationStandard;
-  eq2: EquationStandard;
-  onUpdate: (eq1: EquationStandard, eq2: EquationStandard) => void;
+  equations: EquationGeneral[];
+  varNames: string[];
+  onUpdate: (equations: EquationGeneral[], varNames: string[]) => void;
+  onAddEquation: () => void;
+  onRemoveEquation: () => void;
   onOpenPresets: () => void;
   lang?: Language;
 }
 
 export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
-  eq1,
-  eq2,
+  equations,
+  varNames,
   onUpdate,
+  onAddEquation,
+  onRemoveEquation,
   onOpenPresets,
   lang = 'en',
 }) => {
   const t = translations[lang];
+  const isZh = lang === 'zh';
+  const n = equations.length;
+
   const [mode, setMode] = useState<'standard' | 'freeform'>('standard');
 
-  // Local state for standard inputs
-  const [a1, setA1] = useState(eq1.a.toString());
-  const [b1, setB1] = useState(eq1.b.toString());
-  const [c1, setC1] = useState(eq1.c.toString());
+  // Local state for standard inputs: 2D array of string coefficients [row][col] and [row] for c
+  const [coeffStrings, setCoeffStrings] = useState<string[][]>(() =>
+    equations.map((eq) => eq.coeffs.map((c) => c.toString()))
+  );
+  const [constStrings, setConstStrings] = useState<string[]>(() =>
+    equations.map((eq) => eq.c.toString())
+  );
 
-  const [a2, setA2] = useState(eq2.a.toString());
-  const [b2, setB2] = useState(eq2.b.toString());
-  const [c2, setC2] = useState(eq2.c.toString());
-
-  // Local state for freeform inputs
-  const [free1, setFree1] = useState('2x + 3y = 7');
-  const [free2, setFree2] = useState('3x - 2y = 4');
+  // Local state for freeform inputs: array of strings
+  const [freeStrings, setFreeStrings] = useState<string[]>(() =>
+    equations.map((eq) => eq.rawStr || formatSyntheticEquation(eq.coeffs, eq.c, varNames))
+  );
 
   const [inputError, setInputError] = useState<string | null>(null);
 
-  // Sync when eq1 / eq2 prop change from outside
-  React.useEffect(() => {
-    setA1(eq1.a.toString());
-    setB1(eq1.b.toString());
-    setC1(eq1.c.toString());
+  function formatSyntheticEquation(coeffs: Fraction[], c: Fraction, vNames: string[]): string {
+    const parts = coeffs.map((cf, idx) => {
+      const v = vNames[idx] || `x${idx + 1}`;
+      const str = cf.toString();
+      if (str === '1') return v;
+      if (str === '-1') return `-${v}`;
+      return `${str}${v}`;
+    });
+    return `${parts.join(' + ').replace(/\+ -/g, '- ')} = ${c.toString()}`;
+  }
 
-    setA2(eq2.a.toString());
-    setB2(eq2.b.toString());
-    setC2(eq2.c.toString());
-
-    const synth1 = `${eq1.a.toString()}x + ${eq1.b.toString()}y = ${eq1.c.toString()}`.replace(/\+ -/g, '- ');
-    const synth2 = `${eq2.a.toString()}x + ${eq2.b.toString()}y = ${eq2.c.toString()}`.replace(/\+ -/g, '- ');
-    setFree1(eq1.rawStr || synth1);
-    setFree2(eq2.rawStr || synth2);
+  // Synchronize when external equations change
+  useEffect(() => {
+    setCoeffStrings(equations.map((eq) => eq.coeffs.map((c) => c.toString())));
+    setConstStrings(equations.map((eq) => eq.c.toString()));
+    setFreeStrings(
+      equations.map((eq) => eq.rawStr || formatSyntheticEquation(eq.coeffs, eq.c, varNames))
+    );
     setInputError(null);
-  }, [eq1, eq2]);
+  }, [equations, varNames]);
 
-  const commitStandard = (
-    nextA1: string,
-    nextB1: string,
-    nextC1: string,
-    nextA2: string,
-    nextB2: string,
-    nextC2: string
-  ) => {
+  const commitStandard = (nextCoeffs: string[][], nextConsts: string[]) => {
     try {
-      const fracA1 = Fraction.from(nextA1 || '0');
-      const fracB1 = Fraction.from(nextB1 || '0');
-      const fracC1 = Fraction.from(nextC1 || '0');
+      const parsedEquations: EquationGeneral[] = [];
 
-      const fracA2 = Fraction.from(nextA2 || '0');
-      const fracB2 = Fraction.from(nextB2 || '0');
-      const fracC2 = Fraction.from(nextC2 || '0');
+      for (let i = 0; i < n; i++) {
+        const rowFracs: Fraction[] = [];
+        let allZero = true;
 
-      if (fracA1.isZero() && fracB1.isZero()) {
-        setInputError(t.errorCoeffZero);
-        return;
-      }
-      if (fracA2.isZero() && fracB2.isZero()) {
-        setInputError(t.errorCoeffZero);
-        return;
+        for (let j = 0; j < n; j++) {
+          const valStr = nextCoeffs[i]?.[j]?.trim() || '0';
+          const frac = Fraction.from(valStr);
+          if (!frac.isZero()) allZero = false;
+          rowFracs.push(frac);
+        }
+
+        if (allZero) {
+          setInputError(
+            isZh
+              ? `方程 ${i + 1} 的所有未知数系数不能同时为 0`
+              : `All coefficients in Equation ${i + 1} cannot be zero.`
+          );
+          return;
+        }
+
+        const cFrac = Fraction.from(nextConsts[i]?.trim() || '0');
+        parsedEquations.push({
+          coeffs: rowFracs,
+          c: cFrac,
+        });
       }
 
       setInputError(null);
-      onUpdate(
-        { a: fracA1, b: fracB1, c: fracC1 },
-        { a: fracA2, b: fracB2, c: fracC2 }
-      );
+      onUpdate(parsedEquations, varNames);
     } catch (e: any) {
-      setInputError(e.message || 'Invalid format: enter integers, decimals, or fractions like 2/3');
+      setInputError(e.message || 'Invalid number format: enter integers, decimals, or fractions like 2/3');
     }
   };
 
-  const commitFreeform = (str1: string, str2: string) => {
+  const commitFreeform = (strings: string[]) => {
     try {
-      const parsed1 = parseLinearEquation(str1);
-      const parsed2 = parseLinearEquation(str2);
+      const parsedEquations: EquationGeneral[] = [];
+
+      for (let i = 0; i < strings.length; i++) {
+        const str = strings[i];
+        const res = parseLinearEquation(str, varNames, lang);
+        parsedEquations.push({
+          coeffs: res.coeffs,
+          c: res.c,
+          rawStr: str,
+        });
+      }
+
       setInputError(null);
-      onUpdate(
-        { a: parsed1.a, b: parsed1.b, c: parsed1.c, rawStr: str1 },
-        { a: parsed2.a, b: parsed2.b, c: parsed2.c, rawStr: str2 }
-      );
+      onUpdate(parsedEquations, varNames);
     } catch (e: any) {
       setInputError(e.message || 'Parsing failed: please check equals sign and variable symbols');
     }
   };
 
-  const handleSwap = () => {
-    onUpdate(eq2, eq1);
+  const handleSwapFirstTwo = () => {
+    if (equations.length < 2) return;
+    const newEqs = [...equations];
+    const temp = newEqs[0];
+    newEqs[0] = newEqs[1];
+    newEqs[1] = temp;
+    onUpdate(newEqs, varNames);
   };
 
   const handleReset = () => {
-    const defaultEq1 = { a: new Fraction(2n), b: new Fraction(3n), c: new Fraction(7n), rawStr: '2x + 3y = 7' };
-    const defaultEq2 = { a: new Fraction(3n), b: new Fraction(-2n), c: new Fraction(4n), rawStr: '3x - 2y = 4' };
-    setA1('2');
-    setB1('3');
-    setC1('7');
-    setA2('3');
-    setB2('-2');
-    setC2('4');
-    setFree1('2x + 3y = 7');
-    setFree2('3x - 2y = 4');
-    setInputError(null);
-    onUpdate(defaultEq1, defaultEq2);
+    if (n === 2) {
+      const defaultEqs: EquationGeneral[] = [
+        { coeffs: [new Fraction(2n), new Fraction(3n)], c: new Fraction(7n), rawStr: '2x + 3y = 7' },
+        { coeffs: [new Fraction(3n), new Fraction(-2n)], c: new Fraction(4n), rawStr: '3x - 2y = 4' },
+      ];
+      onUpdate(defaultEqs, ['x', 'y']);
+    } else if (n === 3) {
+      const defaultEqs: EquationGeneral[] = [
+        { coeffs: [new Fraction(1n), new Fraction(1n), new Fraction(1n)], c: new Fraction(6n), rawStr: 'x + y + z = 6' },
+        { coeffs: [new Fraction(2n), new Fraction(1n), new Fraction(-1n)], c: new Fraction(1n), rawStr: '2x + y - z = 1' },
+        { coeffs: [new Fraction(1n), new Fraction(-1n), new Fraction(2n)], c: new Fraction(5n), rawStr: 'x - y + 2z = 5' },
+      ];
+      onUpdate(defaultEqs, ['x', 'y', 'z']);
+    } else {
+      // Identity matrix with constants
+      const defaultEqs: EquationGeneral[] = Array.from({ length: n }, (_, i) => ({
+        coeffs: Array.from({ length: n }, (_, j) => new Fraction(i === j ? 1n : 0n)),
+        c: new Fraction(BigInt(i + 1)),
+      }));
+      onUpdate(defaultEqs, getDefaultVarNames(n));
+    }
   };
 
   const handleGenerateRandom = () => {
-    const x = Math.floor(Math.random() * 9) - 4;
-    const y = Math.floor(Math.random() * 9) - 4;
+    // Generate clean integer solutions x_i in [-4, 4]
+    const targetSol = Array.from({ length: n }, () => Math.floor(Math.random() * 7) - 3);
+    const coeffsPool = [-3, -2, -1, 1, 2, 3, 4];
 
-    const coeffs = [-3, -2, -1, 1, 2, 3, 4, 5];
-    const a1Val = coeffs[Math.floor(Math.random() * coeffs.length)];
-    let b1Val = coeffs[Math.floor(Math.random() * coeffs.length)];
+    const newEqs: EquationGeneral[] = [];
+    for (let i = 0; i < n; i++) {
+      const rowCoeffs: Fraction[] = [];
+      let rowConst = 0;
 
-    let a2Val = coeffs[Math.floor(Math.random() * coeffs.length)];
-    let b2Val = coeffs[Math.floor(Math.random() * coeffs.length)];
+      for (let j = 0; j < n; j++) {
+        // Bias diagonal elements to be non-zero
+        let cVal = coeffsPool[Math.floor(Math.random() * coeffsPool.length)];
+        if (i === j && cVal === 0) cVal = 1;
+        rowCoeffs.push(new Fraction(BigInt(cVal)));
+        rowConst += cVal * targetSol[j];
+      }
 
-    if (a1Val * b2Val - a2Val * b1Val === 0) {
-      b2Val = b2Val === 1 ? 2 : 1;
+      newEqs.push({
+        coeffs: rowCoeffs,
+        c: new Fraction(BigInt(rowConst)),
+      });
     }
 
-    const c1Val = a1Val * x + b1Val * y;
-    const c2Val = a2Val * x + b2Val * y;
-
-    const s1 = `${a1Val === 1 ? '' : a1Val === -1 ? '-' : a1Val}x ${b1Val >= 0 ? '+ ' + (b1Val === 1 ? '' : b1Val) : '- ' + (b1Val === -1 ? '' : -b1Val)}y = ${c1Val}`;
-    const s2 = `${a2Val === 1 ? '' : a2Val === -1 ? '-' : a2Val}x ${b2Val >= 0 ? '+ ' + (b2Val === 1 ? '' : b2Val) : '- ' + (b2Val === -1 ? '' : -b2Val)}y = ${c2Val}`;
-
-    const newEq1 = { a: new Fraction(BigInt(a1Val)), b: new Fraction(BigInt(b1Val)), c: new Fraction(BigInt(c1Val)), rawStr: s1 };
-    const newEq2 = { a: new Fraction(BigInt(a2Val)), b: new Fraction(BigInt(b2Val)), c: new Fraction(BigInt(c2Val)), rawStr: s2 };
-
-    setA1(a1Val.toString());
-    setB1(b1Val.toString());
-    setC1(c1Val.toString());
-    setA2(a2Val.toString());
-    setB2(b2Val.toString());
-    setC2(c2Val.toString());
-    setFree1(s1);
-    setFree2(s2);
-
-    setInputError(null);
-    onUpdate(newEq1, newEq2);
+    onUpdate(newEqs, varNames);
   };
+
+  const circleLabels = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧'];
+  const rowColors = [
+    'text-blue-700 bg-blue-600',
+    'text-amber-700 bg-amber-600',
+    'text-emerald-700 bg-emerald-600',
+    'text-purple-700 bg-purple-600',
+    'text-rose-700 bg-rose-600',
+    'text-cyan-700 bg-cyan-600',
+  ];
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
-      {/* Header and Mode Toggle */}
+      {/* Header and Dimension / Mode Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
         <div>
-          <h2 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <span>{t.inputTitle}</span>
-            <span className="text-xs font-normal text-slate-500">{t.inputSubtitle}</span>
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              <span>{t.inputTitle}</span>
+              <span className="text-xs px-2 py-0.5 rounded-full font-mono font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                {n} × {n}
+              </span>
+            </h2>
+          </div>
           <p className="text-xs text-slate-500 mt-0.5">{t.inputHint}</p>
         </div>
 
-        {/* Input Mode Selector */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg shrink-0">
+        {/* Action Controls: Add Equation & Mode Toggle */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Add Equation Button */}
           <button
-            onClick={() => setMode('standard')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              mode === 'standard' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-            }`}
+            onClick={onAddEquation}
+            disabled={n >= 6}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow-xs transition-colors"
+            title={t.btnAddEquation}
           >
-            <Grid className="w-3.5 h-3.5" />
-            <span>{t.modeStandard}</span>
+            <Plus className="w-3.5 h-3.5" />
+            <span>{t.btnAddEquation}</span>
           </button>
-          <button
-            onClick={() => setMode('freeform')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              mode === 'freeform' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span>{t.modeFreeform}</span>
-          </button>
+
+          {/* Remove Equation Button */}
+          {n > 2 && (
+            <button
+              onClick={onRemoveEquation}
+              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-colors"
+              title={t.btnRemoveEquation}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>{t.btnRemoveEquation}</span>
+            </button>
+          )}
+
+          {/* Standard / Freeform Toggle */}
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg shrink-0">
+            <button
+              onClick={() => setMode('standard')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                mode === 'standard' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Grid className="w-3.5 h-3.5" />
+              <span>{t.modeStandard}</span>
+            </button>
+            <button
+              onClick={() => setMode('freeform')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                mode === 'freeform' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>{t.modeFreeform}</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Input Fields */}
-      <div className="mt-5">
+      <div className="mt-4">
         {mode === 'standard' ? (
-          <div className="space-y-4">
-            {/* Equation 1 */}
-            <div className="p-3.5 bg-slate-50/70 border border-slate-200/80 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-blue-700 flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-blue-600" />
-                  <span>{t.eq1Label}</span>
-                </span>
-                <span className="text-xs text-slate-400 font-mono">a₁x + b₁y = c₁</span>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 text-sm text-slate-800">
-                <div className="flex items-center gap-1">
-                  <input
-                    type="text"
-                    value={a1}
-                    onChange={(e) => {
-                      setA1(e.target.value);
-                      commitStandard(e.target.value, b1, c1, a2, b2, c2);
-                    }}
-                    placeholder="2"
-                    className="w-16 px-2.5 py-1.5 text-center font-mono font-medium bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  />
-                  <span className="font-semibold text-slate-700">x</span>
+          <div className="space-y-3">
+            {equations.map((eq, rowIdx) => {
+              const labelColor = rowColors[rowIdx % rowColors.length].split(' ')[0];
+              const dotBg = rowColors[rowIdx % rowColors.length].split(' ')[1];
+
+              return (
+                <div
+                  key={rowIdx}
+                  className="p-3 bg-slate-50/80 border border-slate-200/80 rounded-lg transition-colors hover:border-slate-300"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-xs font-semibold ${labelColor} flex items-center gap-1.5`}>
+                      <span className={`w-2 h-2 rounded-full ${dotBg}`} />
+                      <span>
+                        {isZh ? `方程 ${circleLabels[rowIdx] || rowIdx + 1}` : `Equation ${circleLabels[rowIdx] || rowIdx + 1}`}
+                      </span>
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-mono">
+                      {varNames.map((v, i) => `a_{${rowIdx + 1}${i + 1}}${v}`).join(' + ')} = c_{rowIdx + 1}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-800">
+                    {varNames.map((vName, colIdx) => (
+                      <React.Fragment key={colIdx}>
+                        {colIdx > 0 && <span className="text-slate-400 font-bold">+</span>}
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="text"
+                            value={coeffStrings[rowIdx]?.[colIdx] ?? '0'}
+                            onChange={(e) => {
+                              const next = coeffStrings.map((r) => [...r]);
+                              if (!next[rowIdx]) next[rowIdx] = [];
+                              next[rowIdx][colIdx] = e.target.value;
+                              setCoeffStrings(next);
+                              commitStandard(next, constStrings);
+                            }}
+                            placeholder="1"
+                            className="w-14 sm:w-16 px-2 py-1.5 text-center font-mono font-medium bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
+                          />
+                          <span className="font-semibold text-slate-700">{vName}</span>
+                        </div>
+                      </React.Fragment>
+                    ))}
+
+                    <span className="text-slate-400 font-bold mx-0.5">=</span>
+
+                    <input
+                      type="text"
+                      value={constStrings[rowIdx] ?? '0'}
+                      onChange={(e) => {
+                        const nextConsts = [...constStrings];
+                        nextConsts[rowIdx] = e.target.value;
+                        setConstStrings(nextConsts);
+                        commitStandard(coeffStrings, nextConsts);
+                      }}
+                      placeholder="0"
+                      className="w-16 sm:w-20 px-2 py-1.5 text-center font-mono font-medium bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
+                    />
+                  </div>
                 </div>
-
-                <span className="text-slate-400">+</span>
-
-                <div className="flex items-center gap-1">
-                  <input
-                    type="text"
-                    value={b1}
-                    onChange={(e) => {
-                      setB1(e.target.value);
-                      commitStandard(a1, e.target.value, c1, a2, b2, c2);
-                    }}
-                    placeholder="3"
-                    className="w-16 px-2.5 py-1.5 text-center font-mono font-medium bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  />
-                  <span className="font-semibold text-slate-700">y</span>
-                </div>
-
-                <span className="text-slate-400">=</span>
-
-                <input
-                  type="text"
-                  value={c1}
-                  onChange={(e) => {
-                    setC1(e.target.value);
-                    commitStandard(a1, b1, e.target.value, a2, b2, c2);
-                  }}
-                  placeholder="7"
-                  className="w-20 px-2.5 py-1.5 text-center font-mono font-medium bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                />
-              </div>
-            </div>
-
-            {/* Equation 2 */}
-            <div className="p-3.5 bg-slate-50/70 border border-slate-200/80 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-amber-700 flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-amber-600" />
-                  <span>{t.eq2Label}</span>
-                </span>
-                <span className="text-xs text-slate-400 font-mono">a₂x + b₂y = c₂</span>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 text-sm text-slate-800">
-                <div className="flex items-center gap-1">
-                  <input
-                    type="text"
-                    value={a2}
-                    onChange={(e) => {
-                      setA2(e.target.value);
-                      commitStandard(a1, b1, c1, e.target.value, b2, c2);
-                    }}
-                    placeholder="3"
-                    className="w-16 px-2.5 py-1.5 text-center font-mono font-medium bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
-                  />
-                  <span className="font-semibold text-slate-700">x</span>
-                </div>
-
-                <span className="text-slate-400">+</span>
-
-                <div className="flex items-center gap-1">
-                  <input
-                    type="text"
-                    value={b2}
-                    onChange={(e) => {
-                      setB2(e.target.value);
-                      commitStandard(a1, b1, c1, a2, e.target.value, c2);
-                    }}
-                    placeholder="-2"
-                    className="w-16 px-2.5 py-1.5 text-center font-mono font-medium bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
-                  />
-                  <span className="font-semibold text-slate-700">y</span>
-                </div>
-
-                <span className="text-slate-400">=</span>
-
-                <input
-                  type="text"
-                  value={c2}
-                  onChange={(e) => {
-                    setC2(e.target.value);
-                    commitStandard(a1, b1, c1, a2, b2, e.target.value);
-                  }}
-                  placeholder="4"
-                  className="w-20 px-2.5 py-1.5 text-center font-mono font-medium bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
-                />
-              </div>
-            </div>
+              );
+            })}
           </div>
         ) : (
           <div className="space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                {t.freeformHelp1}
-              </label>
-              <input
-                type="text"
-                value={free1}
-                onChange={(e) => {
-                  setFree1(e.target.value);
-                  commitFreeform(e.target.value, free2);
-                }}
-                placeholder={t.freeformPlaceholder1}
-                className="w-full px-3 py-2 font-mono text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                {t.freeformHelp2}
-              </label>
-              <input
-                type="text"
-                value={free2}
-                onChange={(e) => {
-                  setFree2(e.target.value);
-                  commitFreeform(free1, e.target.value);
-                }}
-                placeholder={t.freeformPlaceholder2}
-                className="w-full px-3 py-2 font-mono text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-              />
-            </div>
+            {freeStrings.map((str, idx) => (
+              <div key={idx}>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  {isZh
+                    ? `方程 ${circleLabels[idx] || idx + 1} 表达式（支持带括号与分式，未知数限：${varNames.join(', ')}）：`
+                    : `Equation ${circleLabels[idx] || idx + 1} Expression (Allowed variables: ${varNames.join(', ')}):`}
+                </label>
+                <input
+                  type="text"
+                  value={str}
+                  onChange={(e) => {
+                    const next = [...freeStrings];
+                    next[idx] = e.target.value;
+                    setFreeStrings(next);
+                    commitFreeform(next);
+                  }}
+                  placeholder={
+                    idx === 0
+                      ? 'e.g. 2x + 3y = 7'
+                      : idx === 1
+                      ? 'e.g. 3x - 2y = 4'
+                      : 'e.g. x + y + z = 6'
+                  }
+                  className="w-full px-3 py-2 font-mono text-xs sm:text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            ))}
           </div>
         )}
 
         {/* Error message banner */}
         {inputError && (
-          <div className="mt-3 flex items-center gap-2 p-2.5 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{inputError}</span>
+          <div className="mt-3 flex items-start gap-2 p-2.5 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span className="leading-relaxed">{inputError}</span>
           </div>
         )}
 
         {/* Live LaTeX System Preview */}
-        <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex items-center gap-3 overflow-x-auto py-1">
             <span className="text-xs font-medium text-slate-500 shrink-0">{t.currentSystem}</span>
-            <MathView math={formatSystemTeX(eq1, eq2)} />
+            <MathView math={formatGeneralSystemTeX(equations, varNames)} />
           </div>
 
           {/* Quick Tools */}
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap shrink-0">
             <button
               onClick={handleGenerateRandom}
               title={t.btnRandom}
@@ -370,21 +399,25 @@ export const EquationInputPanel: React.FC<EquationInputPanelProps> = ({
               <Sparkles className="w-3.5 h-3.5 text-amber-600" />
               <span>{t.btnRandom}</span>
             </button>
-            <button
-              onClick={onOpenPresets}
-              title={t.btnPresets}
-              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>{t.btnPresets}</span>
-            </button>
-            <button
-              onClick={handleSwap}
-              title={t.btnSwap}
-              className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
-            >
-              <ArrowUpDown className="w-4 h-4" />
-            </button>
+            {n === 2 && (
+              <button
+                onClick={onOpenPresets}
+                title={t.btnPresets}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>{t.btnPresets}</span>
+              </button>
+            )}
+            {n >= 2 && (
+              <button
+                onClick={handleSwapFirstTwo}
+                title={t.btnSwap}
+                className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
+              >
+                <ArrowUpDown className="w-4 h-4" />
+              </button>
+            )}
             <button
               onClick={handleReset}
               title={t.btnReset}

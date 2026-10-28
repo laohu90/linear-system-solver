@@ -67,6 +67,11 @@ export class Fraction {
     if (str === '+' || str === '+1') return new Fraction(1n, 1n);
     if (str === '-' || str === '-1') return new Fraction(-1n, 1n);
 
+    // Guard against alphabetic characters (e.g. 'z', 'abc') causing Cannot convert ... to a BigInt
+    if (/[a-zA-Z]/.test(str)) {
+      throw new Error(`无法将含有字母 "${str}" 解析为有效数值`);
+    }
+
     // Multiplications like "2 * 12"
     if (str.includes('*')) {
       const factors = str.split('*');

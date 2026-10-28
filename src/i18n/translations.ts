@@ -138,6 +138,25 @@ export interface Translations {
   footerExport: string;
   langName: string;
   switchLangPrompt: string;
+
+  // n×n & Matrix Analysis
+  btnAddEquation: string;
+  btnRemoveEquation: string;
+  dimSelector: string;
+  methodGaussian: string;
+  matrixAnalysisTitle: string;
+  matrixRankTitle: string;
+  detTitle: string;
+  cramerTitle: string;
+  roucheCapelliTitle: string;
+  actionEliminate: string;
+  actionSolve: string;
+  actionSubstitute: string;
+  actionPivot: string;
+  rankA: string;
+  rankAug: string;
+  variablesCount: string;
+  augmentedMatrix: string;
 }
 
 const enData = {
@@ -271,6 +290,25 @@ const enData = {
     footerExport: 'Export Homework',
     langName: 'English',
     switchLangPrompt: 'Switch Language',
+
+    // n×n & Matrix Analysis
+    btnAddEquation: 'Add Equation',
+    btnRemoveEquation: 'Remove Equation',
+    dimSelector: 'System Dimension',
+    methodGaussian: 'Gaussian Elimination',
+    matrixAnalysisTitle: 'Matrix & Determinant Analysis',
+    matrixRankTitle: 'Matrix Rank & Rouché-Capelli Theorem',
+    detTitle: 'Determinant D = det(A)',
+    cramerTitle: "Cramer's Rule Determinants",
+    roucheCapelliTitle: 'Rouché–Capelli Theorem Criterion',
+    actionEliminate: 'Eliminate variable: ',
+    actionSolve: 'Solve for variable: ',
+    actionSubstitute: 'Substitute variable: ',
+    actionPivot: 'Row operation: ',
+    rankA: 'Rank of Coefficient Matrix rank(A)',
+    rankAug: 'Rank of Augmented Matrix rank([A|b])',
+    variablesCount: 'Number of Variables (n)',
+    augmentedMatrix: 'Augmented Matrix [A | b]',
   },
   zh: {
     appTitle: '二元一次方程组求解器',
@@ -401,6 +439,25 @@ const enData = {
     footerExport: '作业导出',
     langName: '中文',
     switchLangPrompt: '切换语言',
+
+    // n×n & Matrix Analysis
+    btnAddEquation: '添加方程',
+    btnRemoveEquation: '删除方程',
+    dimSelector: '方程组阶数',
+    methodGaussian: '高斯消元法（矩阵行变换）',
+    matrixAnalysisTitle: '矩阵与行列式深度分析',
+    matrixRankTitle: '矩阵的秩与解的存在唯一性定理',
+    detTitle: '系数行列式 D = det(A)',
+    cramerTitle: '克莱姆法则（各未知数行列式）',
+    roucheCapelliTitle: '朗歇-卡佩利定理判定法则',
+    actionEliminate: '消去未知数：',
+    actionSolve: '求解未知数：',
+    actionSubstitute: '选式变形代入：',
+    actionPivot: '初等行变换操作：',
+    rankA: '系数矩阵的秩 rank(A)',
+    rankAug: '增广矩阵的秩 rank([A|b])',
+    variablesCount: '未知数个数 (n)',
+    augmentedMatrix: '增广矩阵 [A | b]',
   },
 };
 
